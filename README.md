@@ -1,2 +1,1 @@
-
-<img width="2152" height="1356" alt="diagram-export-10-19-2025-7_44_32-PM" src="https://github.com/user-attachments/assets/60177ba6-7485-448b-afe4-17b9d027d624" />
+<img width="545" height="430" alt="diagram-export-10-19-2025-7_48_13-PM" src="https://github.com/user-attachments/assets/e5e80027-7307-4a6d-806b-3370c48dba32" />
