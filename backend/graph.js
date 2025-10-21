@@ -16,13 +16,9 @@ dotenv.config()
 
 const db = new Database('trip.sqlite');
 
-//Web search tool
-const tool= new  TavilySearch({
-    maxResults:10,
-    topic:'general'
-});
 
-const tools=[tool]
+
+
 
 
 //Original LLM
@@ -31,8 +27,8 @@ const llm= new ChatGroq({
      temperature:0.1
 })
 
-//LLm with webSearch tool
-const llmTools=llm.bindTools(tools)
+
+
 
 
 //State for the overall program
@@ -71,6 +67,43 @@ const state= Annotation.Root({
             days: []
         })
     }),
+
+    flightAgent:Annotation({
+        default:()=>({
+            
+    searchQuery: "",
+    searchDate: "",
+    route: {},
+  
+  // OUTBOUND FLIGHTS
+  outboundFlights: [],
+  
+  // RETURN FLIGHTS
+  returnFlights: [],
+  
+ 
+  
+        })
+    }),
+
+    dailyActivity: Annotation({
+  default: () => ([
+    {
+      day: "",
+      date: "",
+      activities: [
+        {
+          time: "",
+          title: "",
+          description: "",
+          location: "",
+          focusArea: "",
+          tips: ""
+        }
+      ]
+    }
+  ])
+})
     
 
 })
@@ -171,13 +204,16 @@ async function check(state){
 
 
 
-const webSearchLlm= llm.bindTools(tools)
+
 
 
 //webSearch tool execute
 async function webSearch(state){
     const {toolCallMessage,input,trip}=state
     const {startDate,startingLocation,endDate,destination,budget}=trip
+
+    const tool = new TavilySearch({ maxResults: 5, topic: 'general' });
+    const webSearchLlm = llm.bindTools([tool]);
  
      
     const message=[new HumanMessage(`Find travel information for a trip from ${startingLocation} to ${destination} between ${startDate} and ${endDate} with a budget of ${budget}. Focus on: attractions, things to do, best places to visit, local tips, and travel recommendations.`),
@@ -397,23 +433,200 @@ You are equipped with webSearch tools, so Search for proper information in the w
 }
 
 
-
-//webCheck(state) is used to check weather a webcheck event has been called or not , and if so web is searched
-// function webCheck(state){
-//     const {toolCallMessage}= state
-
-//     if(toolCallMessage.tool_calls &&toolCallMessage.tool_calls.length>0){return 'webTool'}
-
-//     else {
-//         return 'trys'
-//     }
-
+//FlightGen structuredOutput setup
+const flightGenStructure =  z.object({
     
 
-// }
+   route: z.object({
+    origin: z.object({
+      city: z.string().describe("City of departure"),
+      country: z.string().describe("Country of departure"),
+      airportCode: z.string().describe("IATA code of origin airport (e.g., KTM)"),
+      airportName: z.string().describe("Full name of origin airport")
+    }).describe("Origin airport details"),
 
-function trys(state){
-    console.log(trys)
+    destination: z.object({
+      city: z.string().describe("Destination city"),
+      country: z.string().describe("Destination country"),
+      airportCode: z.string().describe("IATA code of destination airport (e.g., NRT/HND)"),
+      airportName: z.string().describe("Full name of destination airport")
+    }).describe("Destination airport details")
+  }).describe("Flight route information"), 
+
+
+  startDate: z.string().describe("Trip starting date (YYYY-MM-DD or human-readable)"),
+  endDate: z.string().describe("Trip return date (YYYY-MM-DD or human-readable)"),
+
+  outboundFlights: z.array(
+    z.object({
+      rank: z.number().describe("Rank or priority of the flight option"),
+      airline: z.string().describe("Airline name"),
+      route: z.string().describe("Route description (e.g., KTM → NRT)"),
+      duration: z.string().describe("Total travel duration"),
+      stops: z.number().describe("Number of stops (0 = direct)"),
+      price: z.number().describe("Flight price in USD"),
+      recommendation: z.string().optional().describe("Label such as 'Best Value' or 'Fastest'"),
+      bookingLink: z.string().url().optional().describe("Booking page URL if available")
+    })
+  ).describe("List of outbound flight options"),
+
+  returnFlights: z.array(
+    z.object({
+      rank: z.number().describe("Rank or priority of the flight option"),
+      airline: z.string().describe("Airline name"),
+      route: z.string().describe("Route description (e.g., NRT → KTM)"),
+      duration: z.string().describe("Total travel duration"),
+      stops: z.number().describe("Number of stops (0 = direct)"),
+      price: z.number().describe("Flight price in USD"),
+      recommendation: z.string().optional().describe("Label such as 'Best Value' or 'Fastest'"),
+      bookingLink: z.string().url().optional().describe("Booking page URL if available")
+    })
+  ).describe("List of return flight options")
+});
+
+
+
+const flightToolStructured=llm.withStructuredOutput(flightGenStructure)
+
+async function flightGen(state){
+    try{
+        const{trip,planOutline}=state
+        const { tripSummary,start,end,startingLocation,destination,duration,budget,days}= planOutline
+
+
+        const tool = new TavilySearch({ maxResults: 5, topic: 'general' });
+    const flightToolLlm = llm.bindTools([tool]);
+
+        const messages=[new SystemMessage(`You are a agent which is responsible for generating a query , to find the available flight according to the given input from user. You are equiped with webSearch tool and should always use this tool to generate query`),
+            new HumanMessage(`For a travel plan ,Find out the available flight: Both outbound and return flights  [from:${startingLocation}, to: ${destination}, startingDate: ${start}, endingDate: ${end}, tripSummary:${tripSummary}`)]
+        
+        const queryLlm= await flightToolLlm.invoke(messages)
+
+        const toolCallArgs=queryLlm.tool_calls[0]
+
+        const toolCallResponse= await tool.invoke(toolCallArgs) 
+
+         const toolMessage=new ToolMessage({
+        content:toolCallResponse.content,
+        name:toolCallResponse.name,
+        tool_call_id:toolCallResponse.tool_call_id
+
+    })
+
+    const finalMessage=[new SystemMessage(`You are a specialized Flight Search and Aggregation Agent, designed to collect, analyze, and return detailed flight information for a given route and travel dates.
+You ar eprovided with web search result from various flight data sources to find the most relevant outbound and return flights for a travele's itinerary. You are not a conversational agent — your only purpose is to return structured, factual, and consistent flight data.
+
+🎯 Core Responsibilities
+
+Interpret the use's travel intent and extract:
+
+Origin city and airport
+
+Destination city and airport
+
+Start date (departure date)
+
+Return date (arrival back date)
+
+
+
+Rank flight options based on:
+
+Shortest duration
+
+Best balance between price and convenience (e.g., minimal layovers)
+
+Popular or reliable airlines
+
+Return the information in the required schema only — with no extra commentary, explanations, or natural language descriptions.`),
+
+new HumanMessage(`For a travel plan ,Find out the available flight: Both outbound and return flights  [from:${startingLocation}, to: ${destination}, startingDate: ${start}, endingDate: ${end}, tripSummary:${tripSummary}`),
+
+queryLlm,
+toolMessage,
+new HumanMessage(`With the available information provide a structured output for the fligt : tripSummary:[${tripSummary}`)
+]
+
+const finalResponse=await flightToolStructured.invoke(finalMessage)
+console.log(finalResponse)
+
+
+
+
+
+
+    }catch(error){
+        console.log(error)
+    }
+}
+
+
+const dailyActivityTripStructure = z.array(
+  z.object({
+    day: z.union([z.string(), z.number()]).describe("Day number of the trip"),
+    date: z.string().describe("Date of the current day"),
+    activities: z.array(
+      z.object({
+        time: z.string().describe("Approximate time (morning, afternoon, evening)"),
+        title: z.string().describe("Title of the activity"),
+        description: z.string().describe("Detailed description of what to do"),
+        location: z.string().optional().describe("Specific location or area"),
+        focusArea: z.string().describe("Highlight or purpose of the activity (culture, sightseeing, trekking, etc.)"),
+        tips: z.string().optional().describe("Local tips, travel advice or warnings")
+      })
+    ).describe("List of activities for the day")
+  })
+).describe("Daily activities for the entire trip");
+
+const dailyActivityLlm= llm.withStructuredOutput(dailyActivityTripStructure)
+
+async function dailyActivityGen(state){
+    const {toolMessage,planOutline}=state
+    const {tripSummary,start,end,startingLocation,destination,duration,budget,days}=planOutline 
+            
+try{
+   const messages = [
+  new SystemMessage(`You are a JSON output generator for travel activities. Output ONLY valid JSON array format with daily activities. Do not include any other text, explanations, or formatting.
+
+REQUIRED JSON STRUCTURE:
+[
+  {
+    "day": number,
+    "date": "string",
+    "activities": [
+      {
+        "time": "string",
+        "title": "string", 
+        "description": "string",
+        "location": "string",
+        "focusArea": "string",
+        "tips": "string"
+      }
+    ]
+  }
+]
+
+Rules:
+- Output pure JSON only
+- No markdown, no code blocks
+- No additional text
+- Valid JSON syntax only`),
+
+  new HumanMessage(`Create daily activities JSON for:
+Trip: ${tripSummary}
+Dates: ${start} to ${end}
+From: ${startingLocation} to ${destination}
+Days: ${JSON.stringify(days)}
+Info: ${toolMessage}
+
+OUTPUT ONLY JSON:`)
+];
+
+const response= await dailyActivityLlm.invoke(messages)
+return {dailyActivity:response}
+
+}catch(error){console.log(error)}
+
 }
 
  const graphBuilder= new StateGraph(state)
@@ -423,14 +636,16 @@ function trys(state){
             .addNode('validate',validate)
             .addNode('webTool',  webSearch) //webSearch tool
             .addNode('planOutlineGen',planOutlineGen)
-            .addNode('trys',trys)
+            .addNode('flightGen',flightGen)
+            .addNode('dailyActivityGen',dailyActivityGen)
             .addEdge('__start__','userInput')
             .addEdge('userInput','validate')
             .addConditionalEdges('validate',check)
-            
             .addEdge('webTool','planOutlineGen')
-            .addEdge('planOutlineGen','trys')
-            .addEdge('trys','__end__')
+            .addEdge('planOutlineGen','flightGen')
+            .addEdge('planOutlineGen','dailyActivityGen')
+            .addEdge('flightGen','__end__')
+            .addEdge('dailyActivityGen','__end__')
 
  const workflow= graph.compile({checkpointer:checkPointer})
 
