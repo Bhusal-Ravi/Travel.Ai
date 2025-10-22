@@ -6,6 +6,7 @@ import { MemorySaver } from "@langchain/langgraph";
 import { HumanMessage, AIMessage, SystemMessage,ToolMessage } from "@langchain/core/messages";
 import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
 
+
 import { TavilySearch } from "@langchain/tavily";
 import Database from 'better-sqlite3';
 
@@ -24,7 +25,7 @@ const db = new Database('trip.sqlite');
 //Original LLM
 const llm= new ChatGroq({
      model: "llama-3.3-70b-versatile",
-     temperature:0.1
+     temperature:0.3
 })
 
 
@@ -86,24 +87,13 @@ const state= Annotation.Root({
         })
     }),
 
-    dailyActivity: Annotation({
-  default: () => ([
-    {
-      day: "",
-      date: "",
-      activities: [
-        {
-          time: "",
-          title: "",
-          description: "",
-          location: "",
-          focusArea: "",
-          tips: ""
-        }
-      ]
-    }
-  ])
-})
+   dailyActivity:Annotation({
+    default:()=>({
+          days:[{
+
+          }]
+    })
+   })
     
 
 })
@@ -355,7 +345,7 @@ Remember: Your output is the foundation for creating an amazing trip. Be thoroug
  new HumanMessage(`Find travel information for a trip from ${startingLocation} to ${destination} between ${startDate} and ${endDate} with a budget of ${budget}. Focus on: attractions, things to do, best places to visit, local tips, and travel recommendations.`),
 webResponse,        
 toolMessage,
-new HumanMessage(`Now analyze the search results above and provide a comprehensive travel information summary following the format and guidelines in your system instructions.`)
+new HumanMessage(`Now analyze the search results above and provide a comprehensive travel information summary following the format and guidelines in your system instructions. Do not include message such as [ "Note: The information provided is based on the search results and may not be comprehensive or up-to-date. It's always a good idea to check with local authorities and tour operators for the latest information and advice.", ] Only summarize the information`)
 ]
 
     const finalResponse= await llm.invoke(finalMessage)
@@ -553,80 +543,144 @@ console.log(finalResponse)
 
 
 
-
+return { flightAgent:finalResponse}
 
     }catch(error){
         console.log(error)
     }
 }
 
+const dailyActivityTripStructure = z.object({
+  days: z.array(
+    z.object({
+      day: z.number().describe("Day number of the trip (1, 2, 3, etc.)"),
+      date: z.string().describe("Date for this day"),
+      title: z.string().optional().describe("Optional brief title or theme for the day"),
+      activities: z.array(
+        z.object({
+          time: z.string().optional().describe("Morning, afternoon, evening, or approximate time"),
+          description: z.string().describe("Description of the activity"),
+          location: z.string().optional().describe("Location for this activity"),
+          focusArea: z.string().optional().describe("Focus or purpose, e.g., sightseeing, culture, trekking"),
+          tips: z.string().optional().describe("Travel tips or advice")
+        })
+      ).describe("List of activities for this day")
+    })
+  ).describe("Array of daily itinerary items")
+}).describe("Structured daily itinerary for the trip");
 
-const dailyActivityTripStructure = z.array(
-  z.object({
-    day: z.union([z.string(), z.number()]).describe("Day number of the trip"),
-    date: z.string().describe("Date of the current day"),
-    activities: z.array(
-      z.object({
-        time: z.string().describe("Approximate time (morning, afternoon, evening)"),
-        title: z.string().describe("Title of the activity"),
-        description: z.string().describe("Detailed description of what to do"),
-        location: z.string().optional().describe("Specific location or area"),
-        focusArea: z.string().describe("Highlight or purpose of the activity (culture, sightseeing, trekking, etc.)"),
-        tips: z.string().optional().describe("Local tips, travel advice or warnings")
-      })
-    ).describe("List of activities for the day")
-  })
-).describe("Daily activities for the entire trip");
+const dailyActivityLlm = llm.withStructuredOutput(dailyActivityTripStructure);
 
-const dailyActivityLlm= llm.withStructuredOutput(dailyActivityTripStructure)
+async function dailyActivityGen(state) {
+  const { toolCallMessage, planOutline } = state;
+  const { tripSummary, start, end, startingLocation, destination, duration, budget, days } = planOutline;
 
-async function dailyActivityGen(state){
-    const {toolMessage,planOutline}=state
-    const {tripSummary,start,end,startingLocation,destination,duration,budget,days}=planOutline 
-            
-try{
-   const messages = [
-  new SystemMessage(`You are a JSON output generator for travel activities. Output ONLY valid JSON array format with daily activities. Do not include any other text, explanations, or formatting.
-
-REQUIRED JSON STRUCTURE:
-[
-  {
-    "day": number,
-    "date": "string",
-    "activities": [
-      {
-        "time": "string",
-        "title": "string", 
-        "description": "string",
-        "location": "string",
-        "focusArea": "string",
-        "tips": "string"
-      }
-    ]
-  }
-]
+  try {
+    const messages = [
+      new SystemMessage(`
+You are a travel itinerary generator. 
+Your goal is to create a list of daily activities for a trip, formatted strictly according to the provided schema.
+The description of each activity should be descriptive enough, and full fo information. Do not write one line description
+Examples:
+{
+    days: [
+    {
+      day: 1,
+      date: "2024-03-10",
+      title: "Arrival and Historic District Exploration",
+      activities: [
+        {
+          time: "Morning",
+          description: "Arrive at the international airport and take a pre-booked private transfer to your downtown hotel. Check in, unpack, and take some time to freshen up after your long journey. Get acquainted with the hotel amenities and ask the concierge for local recommendations.",
+          location: "International Airport & Grand City Hotel",
+          focusArea: "Transportation & Settling In",
+          tips: "Have some local currency ready for tips and keep your passport easily accessible during hotel check-in process"
+        },
+        {
+          time: "Afternoon",
+          description: "Embark on a guided walking tour through the historic old town district, visiting ancient cathedrals, medieval town squares, and hidden alleyways filled with local artisans. Learn about the city's rich history dating back 800 years and see architectural marvels from different eras.",
+          location: "Historic Old Town District",
+          focusArea: "Cultural Sightseeing & History",
+          tips: "Wear comfortable walking shoes and bring a reusable water bottle. The cobblestone streets can be uneven so watch your step"
+        },
+        {
+          time: "Evening",
+          description: "Enjoy a welcome dinner at a traditional restaurant featuring authentic local cuisine. Sample regional specialties prepared with fresh, seasonal ingredients while experiencing the warm hospitality and charming ambiance of a family-owned establishment that has been operating for generations.",
+          location: "Traditional Local Restaurant",
+          focusArea: "Culinary Experience & Dining",
+          tips: "Don't be afraid to try unfamiliar dishes - ask your server for recommendations based on your preferences"
+        }
+      ]
+    },
+    {
+      day: 2,
+      date: "2024-03-11",
+      title: "Museum Day and Cultural Immersion",
+      activities: [
+        {
+          time: "Morning",
+          description: "Spend the morning exploring the world-renowned National Art Museum, home to an extensive collection of classical and contemporary works. Take a guided tour focusing on the most significant pieces and learn about the artistic movements that shaped the country's cultural identity over centuries.",
+          location: "National Art Museum",
+          focusArea: "Art Appreciation & Culture",
+          tips: "Book the early morning tour to avoid crowds and consider renting an audio guide for in-depth commentary"
+        },
+        {
+          time: "Afternoon",
+          description: "Participate in an interactive cooking class where you'll learn to prepare traditional dishes from scratch. Visit a local market with your chef instructor to select fresh ingredients, then master cooking techniques passed down through generations while enjoying the fruits of your labor for lunch.",
+          location: "Cooking School & Local Market",
+          focusArea: "Hands-on Culinary Experience",
+          tips: "Take notes during the class and don't hesitate to ask questions - the recipes make great souvenirs to recreate at home"
+        },
+        {
+          time: "Evening",
+          description: "Attend a spectacular cultural performance featuring traditional music, dance, and costumes at the historic city theater. Experience the vibrant storytelling through movement and sound that has been preserved for centuries, showcasing the diverse ethnic traditions of the region.",
+          location: "City Performing Arts Theater",
+          focusArea: "Cultural Entertainment",
+          tips: "Arrive 30 minutes early to explore the beautiful theater architecture and read about the performance in the program guide"
+        }
+      ]
+    },
+}
 
 Rules:
-- Output pure JSON only
-- No markdown, no code blocks
-- No additional text
-- Valid JSON syntax only`),
+- Return **only** the required JSON array.
+- Do **not** write any commentary, markdown, or line-breaks.
+- Keep every field short and concise.
 
-  new HumanMessage(`Create daily activities JSON for:
-Trip: ${tripSummary}
-Dates: ${start} to ${end}
-From: ${startingLocation} to ${destination}
-Days: ${JSON.stringify(days)}
-Info: ${toolMessage}
+      `),
 
-OUTPUT ONLY JSON:`)
-];
+      new HumanMessage(`
+Generate structured daily activities for the following trip:
 
-const response= await dailyActivityLlm.invoke(messages)
-return {dailyActivity:response}
+Trip Summary: ${tripSummary}
+Travel Dates: ${start} → ${end}
+From: ${startingLocation}
+To: ${destination}
+Duration: ${duration} days
+Budget: ${budget}
+Days Info: ${JSON.stringify(days, null, 2)}
 
-}catch(error){console.log(error)}
+Additional Info: ${toolCallMessage}
 
+Return only valid structured data that conforms exactly to the schema.
+      `),
+    ];
+
+    console.log("DaysiNfo",JSON.stringify(days, null, 2))
+    console.log(toolCallMessage)
+
+    const response = await dailyActivityLlm.invoke(messages);
+    console.log(response)
+     return { dailyActivity: response };
+
+  } catch (error) {
+    console.error("Error generating daily activity:", error);
+    return { error: "Failed to generate structured daily activity." };
+  }
+}
+
+async function trys(state){
+  console.log('trys')
 }
 
  const graphBuilder= new StateGraph(state)
@@ -638,14 +692,16 @@ return {dailyActivity:response}
             .addNode('planOutlineGen',planOutlineGen)
             .addNode('flightGen',flightGen)
             .addNode('dailyActivityGen',dailyActivityGen)
+            .addNode('trys',trys)
             .addEdge('__start__','userInput')
             .addEdge('userInput','validate')
             .addConditionalEdges('validate',check)
             .addEdge('webTool','planOutlineGen')
             .addEdge('planOutlineGen','flightGen')
             .addEdge('planOutlineGen','dailyActivityGen')
-            .addEdge('flightGen','__end__')
-            .addEdge('dailyActivityGen','__end__')
+            .addEdge('flightGen','trys')
+            .addEdge('dailyActivityGen','trys')
+            .addEdge('trys','__end__')
 
  const workflow= graph.compile({checkpointer:checkPointer})
 
