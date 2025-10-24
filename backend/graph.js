@@ -9,6 +9,8 @@ import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
 
 import { TavilySearch } from "@langchain/tavily";
 import Database from 'better-sqlite3';
+import { setMaxListeners } from 'events';
+setMaxListeners(20);
 
 
 
@@ -101,11 +103,22 @@ const state= Annotation.Root({
     })
    }),
     
-   hotelsGen:Annotation({
-    default:()=>({
-        hotels:[{}]
-    })
-   }),
+   hotelsGen: Annotation({
+  default: () => ({
+    hotels: [
+      {
+        day: 1,
+        location: "",
+        hotel: {
+          name: "",
+          pricePerNight: "",
+          rating: "",
+          description: ""
+        }
+      }
+    ]
+  })
+}),
 
    tripSummary:Annotation()
 
@@ -705,19 +718,23 @@ const locationllm=llm.withStructuredOutput(locationStructure)
 const hotelsStructure = z.object({
   hotels: z.array(
     z.object({
-      day: z.union([z.string(), z.number()]).describe("Day number of the trip"),
-      location: z.string().describe("Main area or city of stay for that day"),
+      day: z.union([z.string(), z.number()])
+        .describe("Day number of the trip"),
+      location: z.string()
+        .describe("Main area or city of stay for that day"),
       hotel: z.object({
-        name: z.string().describe("Hotel name"),
-        pricePerNight: z.string().optional().describe("Approx price per night"),
-        rating: z.string().optional().describe("User or site rating of the hotel"),
-        link: z.string().optional().describe("Booking or info URL if available"),
-        description: z.string().optional().describe("Short description of the hotel")
+        name: z.string()
+          .describe("Hotel name"),
+        pricePerNight: z.string().optional()
+          .describe("Approx price per night"),
+        rating: z.string().optional()
+          .describe("User or site rating of the hotel"),
+        description: z.string().optional()
+          .describe("Short description of the hotel")
       }).describe("Selected hotel for the day")
     })
   ).describe("List of selected hotels for each day of the trip")
 });
-
 const hotelLlm= llm.withStructuredOutput(hotelsStructure)
 
 //Hotel generation or searching for available location
@@ -785,19 +802,18 @@ Expected Output:
 
   const response=await   locationllm.invoke(messages)
 
+    
+const toolCallResponse = await Promise.all(
+  response.location.map(async location => {
     const tool = new TavilySearch({ maxResults: 5, topic: 'general' });
-
-        let toolCallResponse=[]
-      
-        for(const location of response.location){
-              const result=await tool.invoke({query:`Best and affordable hotels in ${location} under ${budget} USD`})
-            toolCallResponse.push(result);
-        }
+    return tool.invoke({query: `Best and affordable hotels in ${location} under ${budget} USD`});
+  })
+);
 
 
 
   const hotelMessages=[new SystemMessage(`Your are a smart assistant that is responsible for extracting all the information about hotels in particulat location in a particular day using the information that will be already provided to you in a structured format
-          You are a smart travel assistant AI. Your task is to select **one hotel per day** for a user’s trip based on the trip outline provided.  
+          You are a smart travel assistant AI. Your task is to select **one hotel per day** for a user's trip based on the trip outline provided.  
 
 Rules:  
 1. Only suggest **one hotel per day**.  
@@ -809,9 +825,11 @@ Rules:
    - rating (if available)  
    - link (if available)  
    - short description (if available)  
-5. Keep the suggestions realistic and appropriate for the type of trip (budget, mid-range, luxury).  
-    Example:
-    {
+5. Keep the suggestions realistic and appropriate for the type of trip (budget, mid-range, luxury). \n
+
+  Example:
+
+   {
   "hotels": [
     {
       "day": 1,
@@ -820,7 +838,6 @@ Rules:
         "name": "Athens Plaza Hotel",
         "pricePerNight": "$120",
         "rating": "4.5",
-        "link": "https://example.com/athens-plaza",
         "description": "Centrally located near Syntagma Square."
       }
     },
@@ -831,13 +848,42 @@ Rules:
         "name": "Oia Blue Hotel",
         "pricePerNight": "$150",
         "rating": "4.8",
-        "link": "https://example.com/oia-blue",
         "description": "Beautiful caldera views and infinity pool."
+      }
+    },
+    {
+      "day": 3,
+      "location": "Zakynthos",
+      "hotel": {
+        "name": "Klelia Beach Hotel",
+        "pricePerNight": "$90",
+        "rating": "4.2",
+        "description": "Comfortable rooms with free Wi-Fi, close to the beach."
+      }
+    },
+    {
+      "day": 4,
+      "location": "Delphi",
+      "hotel": {
+        "name": "Delphi Inn",
+        "pricePerNight": "$100",
+        "rating": "4.0",
+        "description": "Cozy and affordable hotel near main attractions."
+      }
+    },
+    {
+      "day": 5,
+      "location": "Meteora",
+      "hotel": {
+        "name": "Toti Boutique Rooms",
+        "pricePerNight": "$55",
+        "rating": "4.7",
+        "description": "Boutique hotel with a great view of Meteora."
       }
     }
   ]
 }
-
+Do NOT include explanations, tags, or extra text.
     `),
   new HumanMessage(`Extract the hotel information for the location: [${JSON.stringify(response.location)}] .Using the available information \n
                      [${ JSON.stringify(toolCallResponse)} ]. For a trip that is planned as such [${JSON.stringify(planOutline)}]`)
