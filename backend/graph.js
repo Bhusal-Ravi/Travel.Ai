@@ -93,8 +93,21 @@ const state= Annotation.Root({
 
           }]
     })
-   })
+   }),
+
+   locations:Annotation({
+    default:()=>({
+      location:[]
+    })
+   }),
     
+   hotelsGen:Annotation({
+    default:()=>({
+        hotels:[{}]
+    })
+   }),
+
+   tripSummary:Annotation()
 
 })
 
@@ -679,9 +692,197 @@ Return only valid structured data that conforms exactly to the schema.
   }
 }
 
-async function trys(state){
-  console.log('trys')
+
+
+const locationStructure=z.object({
+  location:z.array(
+       z.string().describe("A unique location name")
+  ).describe('List of unique locations')
+})
+const locationllm=llm.withStructuredOutput(locationStructure)
+
+
+const hotelsStructure = z.object({
+  hotels: z.array(
+    z.object({
+      day: z.union([z.string(), z.number()]).describe("Day number of the trip"),
+      location: z.string().describe("Main area or city of stay for that day"),
+      hotel: z.object({
+        name: z.string().describe("Hotel name"),
+        pricePerNight: z.string().optional().describe("Approx price per night"),
+        rating: z.string().optional().describe("User or site rating of the hotel"),
+        link: z.string().optional().describe("Booking or info URL if available"),
+        description: z.string().optional().describe("Short description of the hotel")
+      }).describe("Selected hotel for the day")
+    })
+  ).describe("List of selected hotels for each day of the trip")
+});
+
+const hotelLlm= llm.withStructuredOutput(hotelsStructure)
+
+//Hotel generation or searching for available location
+async function hotelGen(state){
+  const {planOutline,trip}=state
+  const {budget}=trip
+ 
+
+  const messages= [new SystemMessage(`You are a smart assistant responsible for extracting all unique *stay or overnight locations* from a structured trip outline.
+
+Your goal is to return an array of places where the traveler is likely to stay or spend the night during the trip. 
+Do NOT include:
+- The user's starting location (e.g., their home city or country)
+- Attractions, landmarks, or temples (e.g., "Acropolis", "Temple of Zeus")
+- Villages or small locations visited only briefly unless they are clear stay destinations
+
+Use reasoning from the provided structured information — especially the “title”, “description”, and “focusArea” fields — to identify the most likely overnight or main base locations for each day.
+
+Example:
+
+Input:
+[
+  {
+    "tripSummary": "A 5-day budget-friendly trip exploring Tokyo’s modern and traditional culture.",
+    "destination": "Tokyo",
+    "days": [
+      { "day": 1, "title": "Arrival and Orientation", "description": "Arrive in Tokyo, check into hotel...", "focusArea": "Arrival / Light exploration" },
+      { "day": 2, "title": "Cultural Exploration", "description": "Visit Asakusa district, Senso-ji Temple...", "focusArea": "Culture" },
+      { "day": 4, "title": "Day Trip Adventure", "description": "Take a day trip to Yokohama or Mount Fuji area for scenic views.", "focusArea": "Nature / Excursion" }
+    ]
+  }
+]
+
+Output:
+["Tokyo", "Yokohama"]
+
+---
+
+Now, for this input:
+{
+  "planOutline": {
+    "tripSummary": "5-day trip to Greece",
+    "start": "Sat Oct 25 2025",
+    "end": "Thu Oct 30 2025",
+    "startingLocation": "Kathmandu, Nepal",
+    "destination": "Greece",
+    "duration": "5",
+    "budget": "1000",
+    "days": [
+      { "day": "1", "title": "Arrival in Athens", "description": "Arrive in Athens, explore the city, and visit the Acropolis", "focusArea": "Acropolis" },
+      { "day": "2", "title": "Athens Exploration", "description": "Visit the Temple of Olympian Zeus and other historic sites in Athens", "focusArea": "Temple of Olympian Zeus" },
+      { "day": "3", "title": "Navagio Beach", "description": "Travel to Zakynthos and visit the secluded Navagio Beach", "focusArea": "Navagio Beach" },
+      { "day": "4", "title": "Santorini Exploration", "description": "Travel to Santorini, explore the village of Oia, and enjoy the stunning views", "focusArea": "Oia Village" },
+      { "day": "5", "title": "Mykonos Beach Party", "description": "Travel to Mykonos, enjoy the beach parties, and relax on the beautiful beaches", "focusArea": "Mykonos Beach" }
+    ]
+  }
 }
+
+Expected Output:
+["Athens", "Zakynthos", "Santorini", "Mykonos"]`),
+    new HumanMessage(`Extract unique location in a array from the information :${JSON.stringify(planOutline)}`)
+    ]
+
+
+
+  const response=await   locationllm.invoke(messages)
+
+    const tool = new TavilySearch({ maxResults: 5, topic: 'general' });
+
+        let toolCallResponse=[]
+      
+        for(const location of response.location){
+              const result=await tool.invoke({query:`Best and affordable hotels in ${location} under ${budget} USD`})
+            toolCallResponse.push(result);
+        }
+
+
+
+  const hotelMessages=[new SystemMessage(`Your are a smart assistant that is responsible for extracting all the information about hotels in particulat location in a particular day using the information that will be already provided to you in a structured format
+          You are a smart travel assistant AI. Your task is to select **one hotel per day** for a user’s trip based on the trip outline provided.  
+
+Rules:  
+1. Only suggest **one hotel per day**.  
+2. The hotel should be in the **main location where the user is likely staying that day**. Do not include hotels in side-trip or sightseeing locations.  
+3. Use the user's **budget** to filter the hotel recommendations.  
+4. Include the following information for each hotel:  
+   - name  
+   - pricePerNight (if available)  
+   - rating (if available)  
+   - link (if available)  
+   - short description (if available)  
+5. Keep the suggestions realistic and appropriate for the type of trip (budget, mid-range, luxury).  
+    Example:
+    {
+  "hotels": [
+    {
+      "day": 1,
+      "location": "Athens",
+      "hotel": {
+        "name": "Athens Plaza Hotel",
+        "pricePerNight": "$120",
+        "rating": "4.5",
+        "link": "https://example.com/athens-plaza",
+        "description": "Centrally located near Syntagma Square."
+      }
+    },
+    {
+      "day": 2,
+      "location": "Santorini",
+      "hotel": {
+        "name": "Oia Blue Hotel",
+        "pricePerNight": "$150",
+        "rating": "4.8",
+        "link": "https://example.com/oia-blue",
+        "description": "Beautiful caldera views and infinity pool."
+      }
+    }
+  ]
+}
+
+    `),
+  new HumanMessage(`Extract the hotel information for the location: [${JSON.stringify(response.location)}] .Using the available information \n
+                     [${ JSON.stringify(toolCallResponse)} ]. For a trip that is planned as such [${JSON.stringify(planOutline)}]`)
+  ]
+
+         const response2= await hotelLlm.invoke(hotelMessages)
+
+         return {locations:response,hotelsGen:response2}
+}
+
+
+async function summaryGen(state){
+  const {flightAgent,dailyActivity,locations,hotelsGen,trip}=state
+
+
+  const messages=[new SystemMessage(`
+You are a smart travel assistant responsible for summarizing a user’s planned itinerary. 
+You will be provided with structured information including:
+
+- Daily activities for each day
+- Hotel information per day
+- Flight details (if available)
+- Trip outline (start/end dates, starting location, destination, budget)
+
+Your task:
+1. Generate a clear, readable summary of the trip for the user.
+2. Include one sentence per day describing the main activity and the hotel for that day.
+3. Include a brief overview of flights and budget.
+4. Use a friendly, organized tone.
+5. Keep the summary concise and easy to understand.
+
+Do not invent any information; only summarize what is provided.
+Do not say things like  here is your summary,The summary is etc. Just only provide the summary
+`),
+new HumanMessage(`Summarize the following [${JSON.stringify(flightAgent)} \n ${JSON.stringify(dailyActivity)} \n ${JSON.stringify(locations)} \n ${JSON.stringify(hotelGen)} \n ${JSON.stringify(trip)}]`)]
+
+
+const response= await llm.invoke(messages)
+
+return {tripSummary:response.content}
+
+}
+
+
+
 
  const graphBuilder= new StateGraph(state)
 
@@ -692,16 +893,19 @@ async function trys(state){
             .addNode('planOutlineGen',planOutlineGen)
             .addNode('flightGen',flightGen)
             .addNode('dailyActivityGen',dailyActivityGen)
-            .addNode('trys',trys)
+            .addNode('hotelGen',hotelGen)
+            .addNode('summaryGen',summaryGen)
             .addEdge('__start__','userInput')
             .addEdge('userInput','validate')
             .addConditionalEdges('validate',check)
             .addEdge('webTool','planOutlineGen')
             .addEdge('planOutlineGen','flightGen')
             .addEdge('planOutlineGen','dailyActivityGen')
-            .addEdge('flightGen','trys')
-            .addEdge('dailyActivityGen','trys')
-            .addEdge('trys','__end__')
+            .addEdge('planOutlineGen','hotelGen')
+            .addEdge('flightGen','summaryGen')
+            .addEdge('dailyActivityGen','summaryGen')
+            .addEdge('hotelGen','summaryGen')
+            .addEdge('summaryGen','__end__')
 
  const workflow= graph.compile({checkpointer:checkPointer})
 
@@ -732,6 +936,15 @@ export async function regularCall(question){
     const received=question;
     console.log(received)
     const output= await workflow.invoke(new Command({resume:received}),config)
-    console.log(output)
-    return output
+    if(output?.__interrupt__ && output.__interrupt__.length > 0){
+        return  {
+            condition:'interrupt',
+            message:output.__interrupt__[0].value
+        }
+    }else { 
+        return {
+        condition:'complete',
+        message:output
+         }
+        }
  }
