@@ -108,7 +108,7 @@ const state= Annotation.Root({
     hotels: [
       {
         day: 1,
-        location: "",
+        location: '',
         hotel: {
           name: "",
           pricePerNight: "",
@@ -510,7 +510,7 @@ async function flightGen(state){
         const { tripSummary,start,end,startingLocation,destination,duration,budget,days}= planOutline
 
 
-        const tool = new TavilySearch({ maxResults: 5, topic: 'general' });
+        const tool = new TavilySearch({ maxResults: 2, topic: 'general' });
     const flightToolLlm = llm.bindTools([tool]);
 
         const messages=[new SystemMessage(`You are a agent which is responsible for generating a query , to find the available flight according to the given input from user. You are equiped with webSearch tool and should always use this tool to generate query`),
@@ -805,7 +805,7 @@ Expected Output:
     
 const toolCallResponse = await Promise.all(
   response.location.map(async location => {
-    const tool = new TavilySearch({ maxResults: 5, topic: 'general' });
+    const tool = new TavilySearch({ maxResults: 1, topic: 'general' });
     return tool.invoke({query: `Best and affordable hotels in ${location} under ${budget} USD`});
   })
 );

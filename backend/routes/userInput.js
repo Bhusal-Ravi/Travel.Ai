@@ -43,7 +43,7 @@ router.post('/userInputResume',async(req,res)=>{
 
     }catch(error){
         console.log(error)
-        return res.status(500).json(error)
+        return res.status(500).json({error:"Failed to process request"})
     }
 })
 
