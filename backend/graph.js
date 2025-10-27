@@ -827,7 +827,7 @@ Rules:
    - short description (if available)  
 5. Keep the suggestions realistic and appropriate for the type of trip (budget, mid-range, luxury). \n
 
-  Example:
+  Example 1:
 
    {
   "hotels": [
@@ -879,6 +879,43 @@ Rules:
         "pricePerNight": "$55",
         "rating": "4.7",
         "description": "Boutique hotel with a great view of Meteora."
+      }
+    }
+  ]
+}
+
+
+Example 2: 
+ {
+  hotels: [
+    {
+      day: 1,
+      location: "Kathmandu",
+      hotel: {
+        name: "Hotel Yak & Yeti",
+        pricePerNight: "120 USD",
+        rating: "4.5",
+        description: "Luxury hotel with modern amenities."
+      }
+    },
+    {
+      day: 2,
+      location: "Pokhara",
+      hotel: {
+        name: "Hotel Landmark",
+        pricePerNight: "",    // not available → empty string
+        rating: "",           // not available → empty string
+        description: ""       // not available → empty string
+      }
+    },
+    {
+      day: 3,
+      location: "Chitwan",
+      hotel: {
+        name: "Wildlife Resort",
+        pricePerNight: "",    // empty string for unavailable info
+        rating: "",
+        description: ""
       }
     }
   ]

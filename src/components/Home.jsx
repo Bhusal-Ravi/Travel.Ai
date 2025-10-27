@@ -19,7 +19,7 @@ function Home() {
         `,
                 }}
             />
-            <div className='relative z-10 h-screen' >
+            <div className='relative z-10 min-h-screen pb-[150px]' >
                 <AnimatePresence
                 >
                     {sideBar && (<motion.div
@@ -47,7 +47,7 @@ function Home() {
                     </div>
                 </div>
 
-                <div className='mx-auto pt-[72px] max-w-3xl w-full px-4'>
+                <div className='mx-auto pt-[72px] max-w-3xl w-full '>
                     <ChatUi />
                 </div>
             </div>
