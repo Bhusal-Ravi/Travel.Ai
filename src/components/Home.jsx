@@ -47,7 +47,7 @@ function Home() {
                     </div>
                 </div>
 
-                <div className='mx-auto pt-[72px] max-w-3xl w-full '>
+                <div className='mx-auto pt-[72px] max-w-7xl w-full '>
                     <ChatUi />
                 </div>
             </div>

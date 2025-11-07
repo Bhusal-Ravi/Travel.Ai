@@ -1,4 +1,4 @@
-import { CircleArrowUp, ExternalLink, Flame, PlaneLanding, PlaneTakeoff } from 'lucide-react';
+import { CircleArrowUp, ExternalLink, Flame, Focus, Lightbulb, LightbulbIcon, PlaneLanding, PlaneTakeoff } from 'lucide-react';
 import React, { useState } from 'react'
 import { AnimatePresence, motion } from "motion/react"
 
@@ -89,7 +89,7 @@ function ChatUi() {
                                             </div>
 
                                             <div className='flex justify-between items-center px-5 mt-10 mb-5'>
-                                                <p className='flex  justify-center items-center text-sm border-dashed border p-2 rounded-md border-yellow-400'><Flame className='text-yellow-300 mr-2' />{item.recommendation}</p>
+                                                <p className='flex  justify-center items-center text-sm border-dashed border p-2 rounded-md border-yellow-400'><Flame className='text-yellow-300 mr-2' />{item.recommendation ? item.recommendation : "Best Option"}</p>
                                                 <motion.a
                                                     whileTap={{ scale: 0.8 }}
                                                     whileHover={{ scale: 1.09 }}
@@ -119,7 +119,7 @@ function ChatUi() {
                                             </div>
 
                                             <div className='flex justify-between items-center px-5 mt-10 mb-5'>
-                                                <p className='flex  justify-center items-center text-sm border-dashed border p-2 rounded-md border-yellow-400'><Flame className='text-yellow-300 mr-2' />{item.recommendation}</p>
+                                                <p className='flex  justify-center items-center text-sm border-dashed border p-2 rounded-md border-yellow-400'><Flame className='text-yellow-300 mr-2' />{item.recommendation ? item.recommendation : "Best Option"}</p>
                                                 <motion.a
                                                     whileTap={{ scale: 0.8 }}
                                                     whileHover={{ scale: 1.09 }}
@@ -131,13 +131,53 @@ function ChatUi() {
                                     ))}
                                 </div>
 
+
+
                             </div>
+                        </div>
+                        {/* Daily Activity */}
+                        <div className='mt-[100px] pt-[15px] border-t border-white  flex flex-col justify-center items-center'>
+                            <h1 className='font-mono text-xl border-b border-white'>Daily Activities</h1>
+
+                            {content[0].message.dailyActivity.days.map((item, index) => (
+                                <div key={item.date} className='flex border-2 border-yellow-400/60 mb-10 p-2 rounded-md flex-col mt-5 w-full  justify-center items-center'>
+                                    <div className='mr-auto  rounded-md mb-5 py-1 bg-[#DEDED1] px-5'>
+                                        <p className='text-black'><span className='border-b  border-[#000000]'>Day:</span> <span className='font-semibold text-slate-800'>{item.day}</span> </p>
+                                        <p className='text-black mt-[5px]'><span className='border-b  border-[#000000]'>Date:</span> <span className='font-semibold text-slate-800'>"{item.date}"</span> </p>
+                                    </div>
+                                    <h1 className='text-lg border-b mt-2.5 border-[#FBF3D1]'>Title: <span className='font-bold text-lg'>{item.title}</span></h1>
+                                    {/* Activities */}
+                                    <div className='flex mt-5 mx-auto justify-between  '>
+                                        {item.activities.map((activity, index) => (
+                                            <div className='text-white max-w-1/3 mx-2 flex flex-col justify-between   border p-2 rounded-sm'>
+                                                <p ><span className='border-b border-[#FBF3D1]'>Time:</span> {activity.time}</p>
+                                                <p className='mt-[5px]'><span className='border-b border-[#FBF3D1]'>Location:</span> {activity.location}</p>
+                                                <div className='flex mt-5 flex-col justify-center '>
+
+                                                    <p className='bg-[#DEDED1] p-1 text-black font-mono rounded-sm'>{activity.description}</p>
+                                                    <div className='  cursor-pointer mt-[20px]'>
+                                                        <p className='mt-3 relative flex group  items-center '><Focus strokeWidth={1.5} /><span className='ml-2 px-2 py-1 rounded-md  bg-green-400/50'>{activity.focusArea}</span> <p className='bg-black/60 absolute translate-x-3.5 -translate-y-9 invisible group-hover:visible  text-white p-2 rounded-md max-w-fit'>Focus Area</p></p>
+                                                        <div className='flex mt-5 rounded-sm flex-col justify-center group relative bg-[#F9F8F6]'>
+                                                            <p className='absolute invisible group-hover:visible translate-x-3.5 -translate-y-9 bg-black/50 px-3   text-white py-1 rounded-md max-w-fit '>Tips</p>
+                                                            <p className='flex justify-center items-center mt-[2px] text-black font-bold'>TIPS<LightbulbIcon className='ml-2 text-yellow-400' /></p>
+                                                            <p className='flex flex-col  rounded-sm mt-2'><span className='ml-3 px-2 py-1 rounded-md text-black  '>{activity.tips}</span></p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                    </div>
+
+                                </div>
+                            ))}
+
                         </div>
 
                     </div>}
             </div>
             {/* Bottom textArea */}
-            <div className='fixed px-2 py-10 bg-black/30 rounded-md h-[130px] max-w-3xl w-full  bottom-[7px] flex justify-center backdrop-blur-sm  items-center'>
+            <div className='fixed px-2 py-10 bg-black/30 rounded-md h-[130px] max-w-7xl w-full  bottom-[7px] flex justify-center backdrop-blur-sm  items-center'>
                 <textarea id='chat'
                     rows={4}
                     autoFocus
