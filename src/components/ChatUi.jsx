@@ -140,7 +140,7 @@ function ChatUi() {
                             <h1 className='font-mono text-xl border-b border-white'>Daily Activities</h1>
 
                             {content[0].message.dailyActivity.days.map((item, index) => (
-                                <div key={item.date} className='flex border-2 border-yellow-400/60 mb-10 p-2 rounded-md flex-col mt-5 w-full  justify-center items-center'>
+                                <div key={item.date} className='flex border-4 border-yellow-400  p-2 rounded-md flex-col mt-5 w-full  justify-center items-center'>
                                     <div className='mr-auto  rounded-md mb-5 py-1 bg-[#DEDED1] px-5'>
                                         <p className='text-black'><span className='border-b  border-[#000000]'>Day:</span> <span className='font-semibold text-slate-800'>{item.day}</span> </p>
                                         <p className='text-black mt-[5px]'><span className='border-b  border-[#000000]'>Date:</span> <span className='font-semibold text-slate-800'>"{item.date}"</span> </p>
