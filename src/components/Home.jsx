@@ -10,7 +10,7 @@ function Home() {
         <div className="min-h-screen w-full bg-black relative">
             {/* Midnight Mist */}
             <div
-                className="absolute inset-0 z-0"
+                className="fixed inset-0 z-0 bg-black"
                 style={{
                     backgroundImage: `
           radial-gradient(circle at 50% 100%, rgba(70, 85, 110, 0.5) 0%, transparent 60%),

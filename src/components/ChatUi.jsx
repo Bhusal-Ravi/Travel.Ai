@@ -140,7 +140,7 @@ function ChatUi() {
                             <h1 className='font-mono text-xl border-b border-white'>Daily Activities</h1>
 
                             {content[0].message.dailyActivity.days.map((item, index) => (
-                                <div key={item.date} className='flex border-4 border-yellow-400  p-2 rounded-md flex-col mt-5 w-full  justify-center items-center'>
+                                <div key={item.date} className='flex border-2 border-yellow-400/60  p-2 rounded-md flex-col mt-5 w-full  justify-center items-center'>
                                     <div className='mr-auto  rounded-md mb-5 py-1 bg-[#DEDED1] px-5'>
                                         <p className='text-black'><span className='border-b  border-[#000000]'>Day:</span> <span className='font-semibold text-slate-800'>{item.day}</span> </p>
                                         <p className='text-black mt-[5px]'><span className='border-b  border-[#000000]'>Date:</span> <span className='font-semibold text-slate-800'>"{item.date}"</span> </p>
@@ -149,10 +149,13 @@ function ChatUi() {
                                     {/* Activities */}
                                     <div className='flex mt-5 mx-auto justify-between  '>
                                         {item.activities.map((activity, index) => (
-                                            <div className='text-white max-w-1/3 mx-2 flex flex-col justify-between   border p-2 rounded-sm'>
-                                                <p ><span className='border-b border-[#FBF3D1]'>Time:</span> {activity.time}</p>
-                                                <p className='mt-[5px]'><span className='border-b border-[#FBF3D1]'>Location:</span> {activity.location}</p>
-                                                <div className='flex mt-5 flex-col justify-center '>
+                                            <div className='text-white  hover:bg-yellow-400/20 max-w-1/3 mx-2 flex flex-col    border p-2 rounded-sm'>
+                                                <div>
+                                                    <p ><span className='border-b border-[#FBF3D1]'>Time:</span> {activity.time}</p>
+                                                    <p className='mt-[5px]'><span className='border-b border-[#FBF3D1]'>Location:</span> {activity.location}</p>
+                                                </div>
+
+                                                <div className='flex mt-5 flex-col h-full justify-between   '>
 
                                                     <p className='bg-[#DEDED1] p-1 text-black font-mono rounded-sm'>{activity.description}</p>
                                                     <div className='  cursor-pointer mt-[20px]'>
