@@ -2,6 +2,7 @@ import express from 'express'
 import cors from "cors";
 import dotenv from "dotenv";
 import chatRoute from './routes/userInput.js'
+import photoRoute from './routes/photo.js'
 
 
 dotenv.config();
@@ -24,6 +25,7 @@ app.use(express.json());
 // Routes
 
 app.use('/api',chatRoute)
+app.use('/api',photoRoute)
 
 
 

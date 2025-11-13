@@ -1,8 +1,9 @@
 import { CircleArrowUp, ExternalLink, Flame, Focus, Lightbulb, LightbulbIcon, PlaneLanding, PlaneTakeoff } from 'lucide-react';
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from "motion/react"
 
 import AirplanePath from '../assets/arrow.svg?react'
+import EmblaCarousel from './EmblaCarousel';
 
 
 function ChatUi() {
@@ -11,6 +12,8 @@ function ChatUi() {
     const [content, setContent] = useState([])
     const [error, setError] = useState();
     const [userMessage, setUserMessage] = useState()
+    const [location, setLocation] = useState()
+    const [photoUrl, setPhotoUrl] = useState()
 
     async function fetchState() {
         try {
@@ -32,9 +35,10 @@ function ChatUi() {
             const result = await response.json()
 
             setState(result)
+            setLocation(result.output.message.locations.location)
             console.log(result)
             setContent((prev) => [...prev, { type: 'ai', message: result.output.message }])
-            console.log(content)
+
             setLoading(false)
         } catch (error) { console.log(error) }
     }
@@ -45,6 +49,32 @@ function ChatUi() {
     }
 
 
+    // PhotoFetch
+    async function fetchPhotos() {
+        try {
+            const response = await fetch(`http://localhost:4001/api/photo`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ location: location })
+            })
+            const result = await response.json()
+            console.log(result)
+            setPhotoUrl(result.message)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+
+    useEffect(() => {
+        console.log(location)
+        fetchPhotos()
+
+    }, [location])
+
+
 
     return (
 
@@ -52,12 +82,12 @@ function ChatUi() {
 
 
         <div className='flex flex-col'>
-            <div className='flex  justify-center  items-center bg-black/20  '>
+            <div className='flex  justify-center  items-center bg-black/40  '>
                 {/* ChatBox */}
                 {state &&
                     <div className='text-white w-full px-5   '>
 
-                        <div className='flex flex-col bg- px-3 py-2 rounded-md  items-center mt-5 bg-linear-to-r from-[#434A72] via-[#292B44] to-[#0F1015] border-b border-white'>
+                        <div className='flex flex-col bg- px-3 py-2 rounded-md  items-center mt-5 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-amber-50 via-orange-100 to-stone-500 border-b border-white'>
                             <h1 className='border-b text-xl font-mono'><span className='mr-2'>Title:</span>{content[0].message.planOutline.tripSummary}</h1>
                             <p className='mt-2 text-sm font-light'><span className='font-semibold border-b border-green-600'>Start:</span> {content[0].message.trip?.startingLocation} | <span className='font-semibold border-b border-yellow-600'>Destination:</span> {content[0].message.trip?.destination} | <span className='font-semibold border-b border-red-600'>From</span> [ {content[0].message.trip?.startDate} ] <span className='font-semibold border-b border-red-600'>To</span> [ {content[0].message.trip?.endDate} ]   </p>
                         </div>
@@ -135,6 +165,16 @@ function ChatUi() {
 
                             </div>
                         </div>
+
+                        {/* Photo Collection */}
+
+                        <div>
+
+                            <EmblaCarousel slides={['Kathmanud', "Lalitpur"]} />
+
+                        </div>
+
+
                         {/* Daily Activity */}
                         <div className='mt-[100px] pt-[15px] border-t border-white  flex flex-col justify-center items-center'>
                             <h1 className='font-mono text-xl border-b border-white'>Daily Activities</h1>
