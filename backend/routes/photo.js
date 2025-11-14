@@ -9,7 +9,7 @@ const router= express.Router()
 
 async function getPhotosByLocation(location){
     try{
-         const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(location)}&per_page=3&orientation=portrait`; // 5 photos per location
+         const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(location)}&per_page=3&orientation=portrait`; 
   const response = await fetch(url, {
     headers: {
       Authorization: process.env.PIXEL_API

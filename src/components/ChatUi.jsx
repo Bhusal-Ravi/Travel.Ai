@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from "motion/react"
 
 import AirplanePath from '../assets/arrow.svg?react'
-import EmblaCarousel from './EmblaCarousel';
+import EmblaCarousel from './Carousel/EmblaCarousel';
 
 
 function ChatUi() {
@@ -13,7 +13,7 @@ function ChatUi() {
     const [error, setError] = useState();
     const [userMessage, setUserMessage] = useState()
     const [location, setLocation] = useState()
-    const [photoUrl, setPhotoUrl] = useState()
+    const [photoUrl, setPhotoUrl] = useState([])
 
     async function fetchState() {
         try {
@@ -24,7 +24,7 @@ function ChatUi() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    question: `Plan me a trip to Greece, budget of about 1000$, trip of 5 days starting from tomorrow, travelling from Nepal, Kathmandu, I want to see the deep blue beaches plan accordingly`,
+                    question: `Plan me a trip to Japan, Iwant to visit as many unique places of japan as  possible, budget of about 1000$, trip of 5 days starting from tomorrow, I am leaving from Kathmandu Nepal`,
                     threadId: `user123`
                 })
             })
@@ -61,7 +61,14 @@ function ChatUi() {
             })
             const result = await response.json()
             console.log(result)
-            setPhotoUrl(result.message)
+            const photo = result.message.map((item) => (
+                item.map((url, index) => (
+                    { "url": url.src.portrait, "name": url.alt }
+                ))
+            )).flat()
+
+            setPhotoUrl(photo)
+
         } catch (error) {
             console.log(error)
         }
@@ -82,7 +89,7 @@ function ChatUi() {
 
 
         <div className='flex flex-col'>
-            <div className='flex  justify-center  items-center bg-black/40  '>
+            <div className='flex  justify-center  items-center  bg-black/50  '>
                 {/* ChatBox */}
                 {state &&
                     <div className='text-white w-full px-5   '>
@@ -112,7 +119,8 @@ function ChatUi() {
                                                 <p className='text-sm'>Stops: {item.stops}</p>
 
                                             </div>
-                                            <h1 className='mx-auto mt-5 font-semibold text-lg bg-gradient-to-r from-slate-300 to-yellow-100 bg-clip-text text-transparent border-b border-white  '>{item.airline}</h1>
+                                            <div></div>
+                                            <h1 className='mx-auto mt-5 font-semibold text-lg bg-gradient-to-r from-slate-100 to-yellow-100 bg-clip-text text-transparent border-b border-white  '>{item.airline}</h1>
                                             <div className='flex justify-between items-center px-5 mt-5'>
                                                 <p className='bg-yellow-400/90 text-black max-w-fit p-2 font-semibold rounded-md'>{item.route}</p>
                                                 <p className='bg-green-400/90 max-w-fit text-slate-800 p-2 font-mono rounded-md'>$ {item.price}</p>
@@ -142,7 +150,7 @@ function ChatUi() {
                                                 <p className='text-sm'>Stops: {item.stops}</p>
 
                                             </div>
-                                            <h1 className='mx-auto mt-5 font-semibold text-lg bg-gradient-to-r from-slate-300 to-yellow-100 bg-clip-text text-transparent border-b border-white  '>{item.airline}</h1>
+                                            <h1 className='mx-auto mt-5 font-semibold text-lg bg-gradient-to-r from-slate-100 to-yellow-100 bg-clip-text text-transparent border-b border-white  '>{item.airline}</h1>
                                             <div className='flex justify-between items-center px-5 mt-5'>
                                                 <p className='bg-yellow-400/90 max-w-fit p-2 text-black font-semibold rounded-md'>{item.route}</p>
                                                 <p className='bg-green-400/90 max-w-fit text-slate-800 p-2 font-mono rounded-md'>$ {item.price}</p>
@@ -168,15 +176,19 @@ function ChatUi() {
 
                         {/* Photo Collection */}
 
-                        <div>
-
-                            <EmblaCarousel slides={['Kathmanud', "Lalitpur"]} />
+                        <div className='mt-[100px] flex flex-col border-t border-white justify-center items-center   '>
+                            <h1 className='border-b border-white text-xl mb-[30px] mt-[20px]'>Gallery</h1>
+                            {photoUrl.length > 0 && (
+                                <div className='p-5 bg-black/50 rounded-lg'>
+                                    <EmblaCarousel slides={photoUrl} />
+                                </div>)
+                            }
 
                         </div>
 
 
                         {/* Daily Activity */}
-                        <div className='mt-[100px] pt-[15px] border-t border-white  flex flex-col justify-center items-center'>
+                        <div className='mt-[50px] pt-[15px] border-t border-white  flex flex-col justify-center items-center'>
                             <h1 className='font-mono text-xl border-b border-white'>Daily Activities</h1>
 
                             {content[0].message.dailyActivity.days.map((item, index) => (

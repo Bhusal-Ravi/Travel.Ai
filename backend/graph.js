@@ -748,8 +748,7 @@ async function hotelGen(state){
 Your goal is to return an array of places where the traveler is likely to stay or spend the night during the trip. 
 Do NOT include:
 - The user's starting location (e.g., their home city or country)
-- Attractions, landmarks, or temples (e.g., "Acropolis", "Temple of Zeus")
-- Villages or small locations visited only briefly unless they are clear stay destinations
+
 
 Use reasoning from the provided structured information — especially the “title”, “description”, and “focusArea” fields — to identify the most likely overnight or main base locations for each day.
 
@@ -795,7 +794,7 @@ Now, for this input:
 
 Expected Output:
 ["Athens", "Zakynthos", "Santorini", "Mykonos"]`),
-    new HumanMessage(`Extract unique location in a array from the information :${JSON.stringify(planOutline)}`)
+    new HumanMessage(`Extract as many unique location as possible in a array from the information :${JSON.stringify(planOutline)}`)
     ]
 
 
