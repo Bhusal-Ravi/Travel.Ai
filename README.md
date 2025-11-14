@@ -8,3 +8,6 @@ This travel assistant is an AI powered trip planning companion that transforms y
 
 
 <img width="2601" height="2948" alt="image" src="https://github.com/user-attachments/assets/c17fb229-91d4-44bc-b2a8-9d46c4c37b97" />
+
+<img width="1910" height="941" alt="image" src="https://github.com/user-attachments/assets/e3a279b0-3609-47ec-9a74-9ef8234022b1" />
+
