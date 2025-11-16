@@ -12,7 +12,7 @@ function Home() {
             <div
                 className="fixed inset-0 z-0"
                 style={{
-                    background: "radial-gradient(125% 125% at 50% 10%, #fff 40%, #475569 100%)",
+                    background: "radial-gradient(125% 125% at 50% 10%, #9b9b88 40%, #475569 100%)",
                 }}
             />
 

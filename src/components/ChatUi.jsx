@@ -1,4 +1,4 @@
-import { CircleArrowUp, ExternalLink, Flame, Focus, Lightbulb, LightbulbIcon, PlaneLanding, PlaneTakeoff } from 'lucide-react';
+import { CircleArrowUp, ExternalLink, Flame, Focus, Lightbulb, LightbulbIcon, PlaneLanding, PlaneTakeoff, Star } from 'lucide-react';
 import React, { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from "motion/react"
 
@@ -24,7 +24,7 @@ function ChatUi() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    question: `Plan me a trip to Japan, Iwant to visit as many unique places of japan as  possible, budget of about 1000$, trip of 5 days starting from tomorrow, I am leaving from Kathmandu Nepal`,
+                    question: `Plan me a trip to Dubai,Uae, Iwant to visit as many unique places of Dubai as  possible, budget of about 1000$, trip of 5 days starting from tomorrow, I am leaving from Kathmandu Nepal`,
                     threadId: `user123`
                 })
             })
@@ -81,6 +81,10 @@ function ChatUi() {
 
     }, [location])
 
+    function hotelButton(name, location) {
+        window.open(`https://www.google.com/search?q=Hotel ["${name.toLowerCase()}"] located at ["${location.toLowerCase()}"]`, "_blank")
+    }
+
 
 
     return (
@@ -92,7 +96,7 @@ function ChatUi() {
             <div className='flex  justify-center  items-center  bg-black/50  '>
                 {/* ChatBox */}
                 {state &&
-                    <div className='text-white w-full px-5   '>
+                    <div className='text-white w-full px-5 pb-10   '>
 
                         <div className='flex flex-col bg- px-3 py-2 rounded-md  items-center mt-5 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-amber-50 via-orange-100 to-stone-500 border-b border-white'>
                             <h1 className='border-b text-xl font-mono'><span className='mr-2'>Title:</span>{content[0].message.planOutline.tripSummary}</h1>
@@ -112,8 +116,8 @@ function ChatUi() {
                                 <div className='border flex flex-col  border-white col-span-2 '>
                                     <h1 className='font-mono mx-auto border-b border-green-600'>Outbound Flights</h1>
                                     {content[0].message.flightAgent.outboundFlights.map((item, index) => (
-                                        <div key={index} className='flex flex-col border-t mt-2 border-b border-white'>
-                                            <div className='flex justify-between items-center px-3 mt-5 '>
+                                        <div key={index} className='flex hover:bg-black/30 flex-col border-t mt-2 border-b border-white'>
+                                            <div className='flex  justify-between items-center px-3 mt-5 '>
                                                 <p className='text-sm'>Rank: {item.rank}</p>
                                                 <p className='text-sm'>Time: {item.duration}</p>
                                                 <p className='text-sm'>Stops: {item.stops}</p>
@@ -143,7 +147,7 @@ function ChatUi() {
                                 <div className='flex flex-col border  border-white col-span-2 '>
                                     <h1 className='font-mono mx-auto border-b border-yellow-600'>Return Flights</h1>
                                     {content[0].message.flightAgent.returnFlights.map((item, index) => (
-                                        <div key={index} className='flex flex-col border-t mt-2 border-b border-white'>
+                                        <div key={index} className='flex hover:bg-black/30 flex-col border-t mt-2 border-b border-white'>
                                             <div className='flex justify-between items-center px-3 mt-5 '>
                                                 <p className='text-sm'>Rank: {item.rank}</p>
                                                 <p className='text-sm'>Time: {item.duration}</p>
@@ -201,7 +205,7 @@ function ChatUi() {
                                     {/* Activities */}
                                     <div className='flex mt-5 mx-auto justify-between  '>
                                         {item.activities.map((activity, index) => (
-                                            <div className='text-white  hover:bg-yellow-400/20 max-w-1/3 mx-2 flex flex-col    border p-2 rounded-sm'>
+                                            <div className='text-white  hover:bg-black/40 max-w-1/3 mx-2 flex flex-col    border p-2 rounded-sm'>
                                                 <div>
                                                     <p ><span className='border-b border-[#FBF3D1]'>Time:</span> {activity.time}</p>
                                                     <p className='mt-[5px]'><span className='border-b border-[#FBF3D1]'>Location:</span> {activity.location}</p>
@@ -229,6 +233,36 @@ function ChatUi() {
 
                         </div>
 
+
+                        {/* Hotel Generation */}
+
+                        <div className='mt-[50px]  w-full pt-[15px] border-t border-white  flex flex-col justify-center items-center'>
+                            <h1 className='font-mono text-xl border-b mb-[50px] border-white'>Accommodation List</h1>
+                            {content[0].message.hotelsGen.hotels.map((item, index) => (
+                                <div className='m-auto relative rounded-md pb-[20px] min-w-4/5 flex flex-col justify-center hover:bg-black/40 border-1 border-white items-center mt-[20px]'>
+                                    <div className='absolute top-2 right-2'>
+                                        <motion.button
+                                            onClick={() => hotelButton(item.hotel.name, item.location)}
+                                            whileHover={{ scale: 1.05 }}
+                                            className='flex border-b border-white p-2 cursor-pointer justify-center items-center gap-[5px] '>
+                                            Visit Hotel <ExternalLink strokeWidth={1.5} className='h-[20px] w-[20px]' />
+                                        </motion.button>
+                                    </div>
+                                    <div className='flex justify-center bg-slate-900 rounded-r-4xl gap-[30px] px-5 py-5 mr-auto items-center'>
+                                        <p>Day: {item.day}</p>
+                                        <p>Location: {item.location}</p>
+                                    </div>
+                                    <div className='flex gap-[20px] mt-[20px]'>
+                                        <p className='border-b border-slate-900'><span className='font-bold'>Hotel: </span> {item.hotel.name}</p>
+                                        <p className='border-b border-slate-900'><span className='font-bold'>Per Night: </span>{item.hotel?.pricePerNight === "" ? "N/A" : item.hotel.pricePerNight}</p>
+                                        {item.hotel.rating && <p className='flex font-bold gap-[5px] justify-center items-center'><motion.button
+
+                                            whileHover={{ scale: 1.2 }}><Star strokeWidth={1.5} className='h-[20px] stroke-1 stroke-black fill-amber-300 w-[20px]' /></motion.button>{item.hotel?.rating === "" ? "N/A" : item.hotel.rating}</p>}
+                                    </div>
+                                    <p className='mt-[20px] bg-slate-900 p-3 rounded-full'><span className='font-bold'>About:</span> {item.hotel.description}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>}
             </div>
             {/* Bottom textArea */}
