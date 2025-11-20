@@ -24,7 +24,7 @@ function ChatUi() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    question: `Plan me a trip to Dubai,Uae, Iwant to visit as many unique places of Dubai as  possible, budget of about 1000$, trip of 5 days starting from tomorrow, I am leaving from Kathmandu Nepal`,
+                    question: `Plan me a trip to Dubai,Uae, I want to visit as many unique places of Dubai as  possible, budget of about 1000$, trip of 5 days starting from tomorrow, I am leaving from Kathmandu Nepal`,
                     threadId: `user123`
                 })
             })

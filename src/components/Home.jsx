@@ -2,9 +2,13 @@ import React, { useState } from 'react'
 import ChatUi from './ChatUi'
 import { Menu, PanelRightClose, PanelRightOpen } from 'lucide-react'
 import { AnimatePresence, motion } from "motion/react"
+import Logout from './Logout'
+
 
 function Home() {
+
     const [sideBar, setSideBar] = useState(false)
+
     return (
 
         <div className="min-h-screen w-full relative">
@@ -37,6 +41,7 @@ function Home() {
                         <h1 className='font-mono text-xl ml-5 text-black'>Travel.Ai</h1>
                     </div>
                     <div className='flex gap-4 ml-auto text-black  '>
+                        <Logout />
                         <h1>Home</h1>
                         <h1>AboutUs</h1>
                         <h1>Pricing</h1>

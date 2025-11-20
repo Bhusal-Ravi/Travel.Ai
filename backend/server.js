@@ -1,6 +1,8 @@
 import express from 'express'
 import cors from "cors";
 import dotenv from "dotenv";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./lib/auth.js";
 import chatRoute from './routes/userInput.js'
 import photoRoute from './routes/photo.js'
 
@@ -11,6 +13,7 @@ const router= express.Router()
 const app=express()
 const PORT = process.env.PORT || 3000;
 
+
 app.use(
     cors({
         origin: ['http://localhost:5173'],
@@ -20,7 +23,9 @@ app.use(
        
     })
 );
+app.all('/api/auth/{*any}', toNodeHandler(auth));
 app.use(express.json());
+
 
 // Routes
 
