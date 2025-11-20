@@ -1,6 +1,6 @@
-import { CircleArrowUp, ExternalLink, Flame, Focus, Lightbulb, LightbulbIcon, PlaneLanding, PlaneTakeoff, Star } from 'lucide-react';
+import { CircleArrowUp, ExternalLink, Flame, Focus, Lightbulb, PlaneLanding, PlaneTakeoff, Star } from 'lucide-react';
 import React, { useEffect, useState } from 'react'
-import { AnimatePresence, motion } from "motion/react"
+import { motion } from "framer-motion"
 
 import AirplanePath from '../assets/arrow.svg?react'
 import EmblaCarousel from './Carousel/EmblaCarousel';
@@ -24,7 +24,7 @@ function ChatUi() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    question: `Plan me a trip to Dubai,Uae, I want to visit as many unique places of Dubai as  possible, budget of about 1000$, trip of 5 days starting from tomorrow, I am leaving from Kathmandu Nepal`,
+                    question: userMessage,
                     threadId: `user123`
                 })
             })
@@ -192,42 +192,43 @@ function ChatUi() {
 
 
                         {/* Daily Activity */}
-                        <div className='mt-[50px] pt-[15px] border-t border-white  flex flex-col justify-center items-center'>
-                            <h1 className='font-mono text-xl border-b border-white'>Daily Activities</h1>
+                        <div className='mt-[50px] pt-[15px] border-t border-white flex flex-col justify-center items-center'>
+                            <h1 className='font-mono text-xl border-b border-white mb-[30px]'>Daily Activities</h1>
 
                             {content[0].message.dailyActivity.days.map((item, index) => (
-                                <div key={item.date} className='flex border-2 border-yellow-400/60  p-2 rounded-md flex-col mt-5 w-full  justify-center items-center'>
-                                    <div className='mr-auto  rounded-md mb-5 py-1 bg-[#DEDED1] px-5'>
-                                        <p className='text-black'><span className='border-b  border-[#000000]'>Day:</span> <span className='font-semibold text-slate-800'>{item.day}</span> </p>
-                                        <p className='text-black mt-[5px]'><span className='border-b  border-[#000000]'>Date:</span> <span className='font-semibold text-slate-800'>"{item.date}"</span> </p>
+                                <div key={item.date} className='flex border-2 border-yellow-400/60 p-4 rounded-md flex-col mt-5 w-full justify-center items-center'>
+                                    <div className='mr-auto rounded-md mb-5 py-2 bg-[#DEDED1] px-5'>
+                                        <p className='text-black'><span className='border-b border-[#000000]'>Day:</span> <span className='font-semibold text-slate-800'>{item.day}</span></p>
+                                        <p className='text-black mt-[5px]'><span className='border-b border-[#000000]'>Date:</span> <span className='font-semibold text-slate-800'>"{item.date}"</span></p>
                                     </div>
-                                    <h1 className='text-lg border-b mt-2.5 border-[#FBF3D1]'>Title: <span className='font-bold text-lg'>{item.title}</span></h1>
+                                    <h1 className='text-lg border-b border-[#FBF3D1] mb-5'>Title: <span className='font-bold text-lg'>{item.title}</span></h1>
                                     {/* Activities */}
-                                    <div className='flex mt-5 mx-auto justify-between  '>
-                                        {item.activities.map((activity, index) => (
-                                            <div className='text-white  hover:bg-black/40 max-w-1/3 mx-2 flex flex-col    border p-2 rounded-sm'>
-                                                <div>
-                                                    <p ><span className='border-b border-[#FBF3D1]'>Time:</span> {activity.time}</p>
-                                                    <p className='mt-[5px]'><span className='border-b border-[#FBF3D1]'>Location:</span> {activity.location}</p>
+                                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full'>
+                                        {item.activities.map((activity, actIndex) => (
+                                            <div key={actIndex} className='text-white hover:bg-black/40 flex flex-col border border-white p-3 rounded-md'>
+                                                <div className='mb-4'>
+                                                    <p><span className='border-b border-[#FBF3D1]'>Time:</span> {activity.time}</p>
+                                                    <p className='mt-2'><span className='border-b border-[#FBF3D1]'>Location:</span> {activity.location}</p>
                                                 </div>
 
-                                                <div className='flex mt-5 flex-col h-full justify-between   '>
-
-                                                    <p className='bg-[#DEDED1] p-1 text-black font-mono rounded-sm'>{activity.description}</p>
-                                                    <div className='  cursor-pointer mt-[20px]'>
-                                                        <p className='mt-3 relative flex group  items-center '><Focus strokeWidth={1.5} /><span className='ml-2 px-2 py-1 rounded-md  bg-green-400/50'>{activity.focusArea}</span> <p className='bg-black/60 absolute translate-x-3.5 -translate-y-9 invisible group-hover:visible  text-white p-2 rounded-md max-w-fit'>Focus Area</p></p>
-                                                        <div className='flex mt-5 rounded-sm flex-col justify-center group relative bg-[#F9F8F6]'>
-                                                            <p className='absolute invisible group-hover:visible translate-x-3.5 -translate-y-9 bg-black/50 px-3   text-white py-1 rounded-md max-w-fit '>Tips</p>
-                                                            <p className='flex justify-center items-center mt-[2px] text-black font-bold'>TIPS<LightbulbIcon className='ml-2 text-yellow-400' /></p>
-                                                            <p className='flex flex-col  rounded-sm mt-2'><span className='ml-3 px-2 py-1 rounded-md text-black  '>{activity.tips}</span></p>
+                                                <div className='flex flex-col h-full justify-between'>
+                                                    <p className='bg-[#DEDED1] p-2 text-black font-mono rounded-sm mb-4'>{activity.description}</p>
+                                                    <div>
+                                                        <p className='mt-3 relative flex group items-center'>
+                                                            <Focus strokeWidth={1.5} />
+                                                            <span className='ml-2 px-2 py-1 rounded-md bg-green-400/50'>{activity.focusArea}</span>
+                                                            <span className='bg-black/60 absolute translate-x-3.5 -translate-y-9 invisible group-hover:visible text-white p-2 rounded-md whitespace-nowrap'>Focus Area</span>
+                                                        </p>
+                                                        <div className='flex mt-4 rounded-sm flex-col justify-center group relative bg-[#F9F8F6] p-2'>
+                                                            <span className='absolute invisible group-hover:visible translate-x-3.5 -translate-y-9 bg-black/50 px-3 text-white py-1 rounded-md whitespace-nowrap'>Tips</span>
+                                                            <p className='flex justify-center items-center text-black font-bold'>TIPS<Lightbulb className='ml-2 text-yellow-400' /></p>
+                                                            <p className='mt-2 text-black text-sm'>{activity.tips}</p>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         ))}
-
                                     </div>
-
                                 </div>
                             ))}
 
@@ -236,30 +237,37 @@ function ChatUi() {
 
                         {/* Hotel Generation */}
 
-                        <div className='mt-[50px]  w-full pt-[15px] border-t border-white  flex flex-col justify-center items-center'>
-                            <h1 className='font-mono text-xl border-b mb-[50px] border-white'>Accommodation List</h1>
+                        <div className='mt-[50px] w-full pt-[15px] border-t border-white flex flex-col justify-center items-center'>
+                            <h1 className='font-mono text-xl border-b mb-[30px] border-white'>Accommodation List</h1>
                             {content[0].message.hotelsGen.hotels.map((item, index) => (
-                                <div className='m-auto relative rounded-md pb-[20px] min-w-4/5 flex flex-col justify-center hover:bg-black/40 border-1 border-white items-center mt-[20px]'>
-                                    <div className='absolute top-2 right-2'>
+                                <div key={index} className='w-full relative rounded-md border-2 border-yellow-400/60 p-4 flex flex-col hover:bg-black/40 mt-5'>
+                                    <div className='absolute top-3 right-3'>
                                         <motion.button
                                             onClick={() => hotelButton(item.hotel.name, item.location)}
                                             whileHover={{ scale: 1.05 }}
-                                            className='flex border-b border-white p-2 cursor-pointer justify-center items-center gap-[5px] '>
-                                            Visit Hotel <ExternalLink strokeWidth={1.5} className='h-[20px] w-[20px]' />
+                                            className='flex border-b border-white px-3 py-2 cursor-pointer justify-center items-center gap-2'>
+                                            Visit Hotel <ExternalLink strokeWidth={1.5} className='h-[18px] w-[18px]' />
                                         </motion.button>
                                     </div>
-                                    <div className='flex justify-center bg-slate-900 rounded-r-4xl gap-[30px] px-5 py-5 mr-auto items-center'>
-                                        <p>Day: {item.day}</p>
-                                        <p>Location: {item.location}</p>
+                                    <div className='flex flex-wrap gap-5 bg-[#DEDED1] rounded-md px-5 py-2 mr-auto mb-4'>
+                                        <p className='text-black'><span className='border-b border-[#000000]'>Day:</span> <span className='font-semibold text-slate-800'>{item.day}</span></p>
+                                        <p className='text-black'><span className='border-b border-[#000000]'>Location:</span> <span className='font-semibold text-slate-800'>{item.location}</span></p>
                                     </div>
-                                    <div className='flex gap-[20px] mt-[20px]'>
-                                        <p className='border-b border-slate-900'><span className='font-bold'>Hotel: </span> {item.hotel.name}</p>
-                                        <p className='border-b border-slate-900'><span className='font-bold'>Per Night: </span>{item.hotel?.pricePerNight === "" ? "N/A" : item.hotel.pricePerNight}</p>
-                                        {item.hotel.rating && <p className='flex font-bold gap-[5px] justify-center items-center'><motion.button
-
-                                            whileHover={{ scale: 1.2 }}><Star strokeWidth={1.5} className='h-[20px] stroke-1 stroke-black fill-amber-300 w-[20px]' /></motion.button>{item.hotel?.rating === "" ? "N/A" : item.hotel.rating}</p>}
+                                    <div className='flex flex-wrap gap-5 items-center mb-4'>
+                                        <p className='border-b border-[#FBF3D1]'><span className='font-bold'>Hotel:</span> {item.hotel.name}</p>
+                                        <p className='border-b border-[#FBF3D1]'><span className='font-bold'>Per Night:</span> {item.hotel?.pricePerNight === "" ? "N/A" : item.hotel.pricePerNight}</p>
+                                        {item.hotel.rating && (
+                                            <p className='flex font-bold gap-2 justify-center items-center'>
+                                                <motion.button whileHover={{ scale: 1.2 }}>
+                                                    <Star strokeWidth={1.5} className='h-[20px] stroke-1 stroke-black fill-amber-300 w-[20px]' />
+                                                </motion.button>
+                                                {item.hotel?.rating === "" ? "N/A" : item.hotel.rating}
+                                            </p>
+                                        )}
                                     </div>
-                                    <p className='mt-[20px] bg-slate-900 p-3 rounded-full'><span className='font-bold'>About:</span> {item.hotel.description}</p>
+                                    <div className='bg-[#F9F8F6] p-3 rounded-md'>
+                                        <p className='text-black'><span className='font-bold'>About:</span> {item.hotel.description}</p>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -275,7 +283,7 @@ function ChatUi() {
                     className=' px-2 resize-none py-1 border-2 w-full rounded-md border-white' />
                 <motion.button
                     whileTap={{ scale: 0.8 }}
-                    whileHover={{ scale: 1.2 }} disabled={loading} className='ml-5  p-2 cursor-pointer ' onClick={handleCLick}> <CircleArrowUp className='text-white h-[50px] w-[30px]' /></motion.button>
+                    whileHover={{ scale: 1.2 }} className='ml-5  p-2 cursor-pointer ' onClick={handleCLick}> <CircleArrowUp className='text-white h-[50px] w-[30px]' /></motion.button>
 
             </div>
         </div>

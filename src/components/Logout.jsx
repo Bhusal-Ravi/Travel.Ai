@@ -19,7 +19,7 @@ function Logout() {
     }
     return (
         <div>
-            <button onClick={handleLogout}>
+            <button className='cursor-pointer' onClick={handleLogout}>
                 Logout
             </button>
         </div>
