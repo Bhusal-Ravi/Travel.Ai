@@ -10,16 +10,28 @@ router.post('/chatstore',async(req,res)=>{
         
         console.log("ChatStorageContent ",content)
         console.log("ChatStoragePhoto",photoUrl)
+        const title= content[0]?.message?.planOutline?.tripSummary
 
         const response= await ChatStorage.create({
             content,photoUrl,userId,chatId
         })
         console.log(response)
 
+        const chatList= await ChatList.findOneAndUpdate(
+            { chatId: chatId },  // filter
+            { title: title },    // update
+            { new: true, upsert: true } // options: return updated doc, create if not exist
+        )
+
+        console.log(chatList)
+
+        
+
         return res.status(200).json({error:false,message:"DataBase Updated"})
 
 
     }catch(error){
+        console.log(error)
         return res.status(500).json({error:true,message:"Internal Server Error"})
     }
 })

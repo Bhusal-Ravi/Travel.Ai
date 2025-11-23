@@ -18,10 +18,9 @@ const ChatStoreSchema= new mongoose.Schema({
           ref:'User'
       },
       chatId:{
-         type:mongoose.Schema.Types.ObjectId,
+         type:String,
          required:true,
          unique:true,
-         ref:'ChatList'
       },
 
   createdAt: {

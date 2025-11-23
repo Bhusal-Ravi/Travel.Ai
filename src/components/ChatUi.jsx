@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import { authClient } from '../lib/auth-client';
 import AirplanePath from '../assets/arrow.svg?react'
 import EmblaCarousel from './Carousel/EmblaCarousel';
+import { useChatId } from '../globalState/chatIdStore.js';
 
 
 function ChatUi() {
@@ -22,6 +23,7 @@ function ChatUi() {
 
     const contentRef = useRef(content)
     const photoRef = useRef(photoUrl)
+    const globalChatId = useChatId((state) => state.setChatId)
 
 
     async function fetchState() {
@@ -73,7 +75,7 @@ function ChatUi() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ content: content, photoUrl: photoUrl })
+                body: JSON.stringify({ content: content, photoUrl: photoUrl, chatId: chatId, userId: userId })
             })
 
             const result = await response.json()
@@ -143,6 +145,7 @@ function ChatUi() {
     function handleChatId() {
         const newId = crypto.randomUUID()
         setChatId(newId)
+        globalChatId(newId)
 
     }
 

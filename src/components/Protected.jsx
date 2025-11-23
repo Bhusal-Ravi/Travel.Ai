@@ -2,8 +2,10 @@ import React, { useEffect } from 'react'
 import { authClient } from '../lib/auth-client';
 import { Navigate, useNavigate } from 'react-router-dom'
 import Loading from './Loading';
+import { useUserId } from '../globalState/userIdStorage.js';
 
 function Protected({ children }) {
+    const globalUserId = useUserId((state) => state.setUserId)
 
 
     const {
@@ -13,6 +15,7 @@ function Protected({ children }) {
         refetch //refetch the session
     } = authClient.useSession()
 
+    globalUserId(session.user.id)
     console.log(session)
 
 
