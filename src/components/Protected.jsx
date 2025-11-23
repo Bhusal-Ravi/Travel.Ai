@@ -13,6 +13,8 @@ function Protected({ children }) {
         refetch //refetch the session
     } = authClient.useSession()
 
+    console.log(session)
+
 
     if (isPending) return <Loading />
 

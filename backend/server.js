@@ -5,6 +5,9 @@ import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth.js";
 import chatRoute from './routes/userInput.js'
 import photoRoute from './routes/photo.js'
+import newChatRoute from './routes/chat.js'
+import connectdb from './config/dbConnection.js'
+import chatStoreRoute from './routes/chatStore.js'
 
 
 dotenv.config();
@@ -31,6 +34,9 @@ app.use(express.json());
 
 app.use('/api',chatRoute)
 app.use('/api',photoRoute)
+app.use('/api',newChatRoute)
+app.use('/api',chatStoreRoute)
+connectdb();
 
 
 

@@ -1,7 +1,7 @@
-import { CircleArrowUp, ExternalLink, Flame, Focus, Lightbulb, PlaneLanding, PlaneTakeoff, Star } from 'lucide-react';
-import React, { useEffect, useState } from 'react'
+import { CircleArrowUp, ExternalLink, Flame, Focus, Lightbulb, PlaneLanding, PlaneTakeoff, Plus, Star } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react'
 import { motion } from "framer-motion"
-
+import { authClient } from '../lib/auth-client';
 import AirplanePath from '../assets/arrow.svg?react'
 import EmblaCarousel from './Carousel/EmblaCarousel';
 
@@ -10,14 +10,24 @@ function ChatUi() {
     const [loading, setLoading] = useState(false)
     const [state, setState] = useState();
     const [content, setContent] = useState([])
-    const [error, setError] = useState();
+    const [stateError, setError] = useState();
     const [userMessage, setUserMessage] = useState()
     const [location, setLocation] = useState()
     const [photoUrl, setPhotoUrl] = useState([])
+    const [chatId, setChatId] = useState();
+    const { data: session } = authClient.useSession()
+    const userId = session?.user?.id
+    const [newChatStatus, setNewChatStatus] = useState()
+
+
+    const contentRef = useRef(content)
+    const photoRef = useRef(photoUrl)
+
 
     async function fetchState() {
         try {
             setLoading(true)
+            setError()
             const response = await fetch(`http://localhost:4001/api/userInput`, {
                 method: 'POST',
                 headers: {
@@ -25,28 +35,66 @@ function ChatUi() {
                 },
                 body: JSON.stringify({
                     question: userMessage,
-                    threadId: `user123`
+                    threadId: chatId
                 })
             })
-            if (!response.ok) {
-                setError(response.error)
-            }
+
 
             const result = await response.json()
-
-            setState(result)
-            setLocation(result.output.message.locations.location)
             console.log(result)
-            setContent((prev) => [...prev, { type: 'ai', message: result.output.message }])
+            if (!result?.output?.message) {
+                setError(result?.error?.error?.message)
 
-            setLoading(false)
-        } catch (error) { console.log(error) }
+            } else {
+                setState(result)
+                setLocation(result.output.message.locations.location)
+                console.log(result)
+                setContent((prev) => [...prev, { type: 'ai', message: result.output.message }])
+
+                setLoading(false)
+            }
+
+        } catch (error) {
+            console.log(error)
+
+        }
     }
 
     function handleCLick(e) {
         fetchState()
 
     }
+
+    // Store Chat Detail
+    async function storeChat() {
+        try {
+            const response = await fetch(`http://localhost:4001/api/chatStore`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content: content, photoUrl: photoUrl })
+            })
+
+            const result = await response.json()
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    useEffect(() => {
+
+
+        storeChat()
+
+
+
+
+    }, [photoUrl])
+
+
+
+
 
 
     // PhotoFetch
@@ -74,10 +122,42 @@ function ChatUi() {
         }
     }
 
+    // Create new chat dataBase
+    async function createNewChat() {
+        try {
+            const response = await fetch(`http://localhost:4001/api/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ chatId: chatId, userId: userId })
+            })
+            const result = await response.json()
+            setNewChatStatus(result)
+            console.log(result)
+        } catch (error) {
+            console.log(error)
+        }
+    }
 
+    function handleChatId() {
+        const newId = crypto.randomUUID()
+        setChatId(newId)
+
+    }
+
+    // Crate New ChatList
+    useEffect(() => {
+        createNewChat()
+    }, [chatId])
+
+
+
+    // Photo Fetch
     useEffect(() => {
         console.log(location)
         fetchPhotos()
+
 
     }, [location])
 
@@ -85,6 +165,28 @@ function ChatUi() {
         window.open(`https://www.google.com/search?q=Hotel ["${name.toLowerCase()}"] located at ["${location.toLowerCase()}"]`, "_blank")
     }
 
+    // New Chat Id
+    if (!chatId) return (<div className='flex flex-col min-h-screen justify-center items-center'>
+        <div className='flex flex-col justify-center items-center'>
+            <h1 className='text-3xl font-semibold border-white border-b-3'>Welcome to TRAVEL.Ai</h1>
+            <p className='text-xl mt-2 font-mono'>Plan your trips in an instant with Agentic Ai</p>
+
+        </div>
+        <motion.button
+            onClick={handleChatId}
+            whileTap={{ scale: 0.8 }}
+            whileHover={{ scale: 1.05 }}
+        >
+            <div className='mt-10 flex text-lg font-bold gap-2 justify-center items-center bg-black/40 text-white p-2 rounded-md cursor-pointer'>New Chat<Plus /></div>
+        </motion.button>
+    </div >)
+
+
+    if (stateError) return (
+        <div className='min-h-screen text-3xl font-bold text-red-600 flex justify-center items-center'>
+            <p>{stateError}</p>
+        </div>
+    )
 
 
     return (
@@ -279,8 +381,9 @@ function ChatUi() {
                     rows={4}
                     autoFocus
                     onChange={(e) => setUserMessage(e.target.value)}
+                    placeholder='You must provide [Source, Destination, No of trip days, Approximate budget, Starting Date etc] ...'
                     value={userMessage}
-                    className=' px-2 resize-none py-1 border-2 w-full rounded-md border-white' />
+                    className=' px-2 text-white font-mono resize-none py-1 border-2 w-full rounded-md border-white' />
                 <motion.button
                     whileTap={{ scale: 0.8 }}
                     whileHover={{ scale: 1.2 }} className='ml-5  p-2 cursor-pointer ' onClick={handleCLick}> <CircleArrowUp className='text-white h-[50px] w-[30px]' /></motion.button>

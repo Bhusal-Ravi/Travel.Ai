@@ -3,6 +3,7 @@ import ChatUi from './ChatUi'
 import { Menu, PanelRightClose, PanelRightOpen } from 'lucide-react'
 import { AnimatePresence, motion } from "motion/react"
 import Logout from './Logout'
+import Sidebar from './Sidebar'
 
 
 function Home() {
@@ -21,16 +22,7 @@ function Home() {
             />
 
             <div className='relative z-10 min-h-screen pb-[150px]' >
-                <AnimatePresence
-                >
-                    {sideBar && (<motion.div
-                        initial={{ x: -200, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        exit={{ x: -200, opacity: 0 }}
-                        className='bg-black/50 overflow-y-auto absolute z-20 left-0 w-[320px] top-[72px] bottom-0 border-r backdrop-blur-xs border-white '>
-
-                    </motion.div>)}
-                </AnimatePresence>
+                <Sidebar sideBar={sideBar} />
                 <div className=' flex  fixed z-20 bg-black/20 w-full px-10 py-5 border-b border-white text-white backdrop-blur-xs'>
                     <div className=' justify-center items-center mr-auto flex '>
                         <motion.button
