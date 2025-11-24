@@ -8,6 +8,7 @@ import photoRoute from './routes/photo.js'
 import newChatRoute from './routes/chat.js'
 import connectdb from './config/dbConnection.js'
 import chatStoreRoute from './routes/chatStore.js'
+import sideBarRoute from './routes/sideBar.js'
 
 
 dotenv.config();
@@ -36,6 +37,7 @@ app.use('/api',chatRoute)
 app.use('/api',photoRoute)
 app.use('/api',newChatRoute)
 app.use('/api',chatStoreRoute)
+app.use('/api',sideBarRoute)
 connectdb();
 
 

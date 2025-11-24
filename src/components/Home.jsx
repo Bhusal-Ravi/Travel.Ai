@@ -22,17 +22,21 @@ function Home() {
             />
 
             <div className='relative z-10 min-h-screen pb-[150px]' >
+                {/* Sidebar */}
                 <Sidebar sideBar={sideBar} />
-                <div className=' flex  fixed z-20 bg-black/20 w-full px-10 py-5 border-b border-white text-white backdrop-blur-xs'>
+                {/* Sidebar  */}
+
+
+                <div className=' flex   fixed z-20 bg-black/20 w-full px-10 py-5 border-b border-white text-white backdrop-blur-xs'>
                     <div className=' justify-center items-center mr-auto flex '>
                         <motion.button
                             whileTap={{ scale: 0.8 }}
                             whileHover={{ scale: 1.2 }}
                             onClick={() => setSideBar((prev) => !prev)}
                         > {!sideBar ? (<PanelRightClose strokeWidth={1.5} className='cursor-pointer' />) : (<PanelRightOpen strokeWidth={1.5} className='cursor-pointer' />)}</motion.button>
-                        <h1 className='font-mono text-xl ml-5 text-black'>Travel.Ai</h1>
+                        <h1 className='font-mono text-xl ml-5 text-white'>Travel.Ai</h1>
                     </div>
-                    <div className='flex gap-4 ml-auto text-black  '>
+                    <div className='text-white flex gap-4 ml-auto   '>
                         <Logout />
                         <h1>Home</h1>
                         <h1>AboutUs</h1>

@@ -23,7 +23,9 @@ function ChatUi() {
 
     const contentRef = useRef(content)
     const photoRef = useRef(photoUrl)
+    const locationRef = useRef(location)
     const globalChatId = useChatId((state) => state.setChatId)
+    const chatIdRef = useRef(chatId)
 
 
     async function fetchState() {
@@ -86,9 +88,11 @@ function ChatUi() {
 
     useEffect(() => {
 
+        if (photoRef.current !== photoUrl) {
+            storeChat()
+        }
 
-        storeChat()
-
+        photoRef.current = photoUrl
 
 
 
@@ -151,7 +155,8 @@ function ChatUi() {
 
     // Crate New ChatList
     useEffect(() => {
-        createNewChat()
+        if (chatIdRef.current != chatId) { createNewChat() }
+        chatIdRef.current = chatId
     }, [chatId])
 
 
@@ -159,9 +164,12 @@ function ChatUi() {
     // Photo Fetch
     useEffect(() => {
         console.log(location)
-        fetchPhotos()
+        if (locationRef.current !== location) {
+            fetchPhotos()
+        }
 
 
+        locationRef.current = location
     }, [location])
 
     function hotelButton(name, location) {

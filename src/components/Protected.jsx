@@ -15,7 +15,7 @@ function Protected({ children }) {
         refetch //refetch the session
     } = authClient.useSession()
 
-    globalUserId(session.user.id)
+    globalUserId(session?.user?.id)
     console.log(session)
 
 
