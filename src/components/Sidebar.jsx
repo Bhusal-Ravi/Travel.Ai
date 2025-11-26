@@ -4,11 +4,13 @@ import { useUserId } from '../globalState/userIdStorage.js'
 
 import { AnimatePresence, motion } from "motion/react"
 import { Ellipsis, RefreshCcw } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 function Sidebar({ sideBar }) {
   const userId = useUserId((state) => state.userId)
   const [data, setData] = useState();
   const [error, setError] = useState();
+  const navigate = useNavigate()
 
   const dataRef = useRef(data)
 
@@ -53,6 +55,12 @@ function Sidebar({ sideBar }) {
   }
 
 
+  function handleChat(item) {
+    const chatId = item.chatId
+    navigate(`/c/${chatId}`)
+  }
+
+
   return (
     <AnimatePresence
     >
@@ -68,11 +76,11 @@ function Sidebar({ sideBar }) {
         {data && (<div className=' flex flex-col mt-[20px]  w-full  justify-center items-center'>
           {data.map((item, index) => (
             <div className='flex relative  group cursor-pointer mt-[5px] bg-black/70 w-full justify-between items-center px-2 gap-5'>
-              <button className='flex cursor-pointer   p-2 text-white  justify-center items-center'><div className='flex'>
-                <h1>{item.title}</h1>
-                <button className='text-white cursor-pointer invisible ml-5 group-hover:visible'><Ellipsis strokeWidth={1.2} /></button>
+              <button onClick={() => handleChat(item)} className='flex cursor-pointer   p-2 text-white  justify-center items-center'><div className='flex'>
+                <h1 className='text-sm font-extralight'>{item.title}</h1>
               </div></button>
-              <p className='invisible group-hover:visible text-xs absolute text-white top-1 right-1 font-thin'>{handleDate(item.createdAt)}</p>
+              <button className='text-white cursor-pointer invisible mr-5 group-hover:visible'><Ellipsis strokeWidth={1.2} /></button>
+              <p className='invisible -translate-y-8 bg-white px-2 py-1 rounded-lg text-black group-hover:visible text-xs absolute  top-1 right-1 font-thin'>{handleDate(item.createdAt)}</p>
 
             </div>
           ))}

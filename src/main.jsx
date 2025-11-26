@@ -7,6 +7,7 @@ import Home from './components/Home.jsx';
 import SignUp from './components/SignUp.jsx';
 import SignIn from './components/SignIn.jsx';
 import Protected from './components/Protected.jsx';
+import Chat from './components/Chat.jsx';
 
 
 
@@ -27,6 +28,10 @@ const router = createBrowserRouter(
         {
           path: '/signin',
           element: <SignIn />
+        },
+        {
+          path: '/c/:chatId',
+          element: <Chat />
         }
       ]
     }
