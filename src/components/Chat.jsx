@@ -1,4 +1,4 @@
-import { CircleArrowUp, ExternalLink, Flame, Focus, Lightbulb, PlaneLanding, PlaneTakeoff, Plus, Star, Menu, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { CircleArrowUp, ExternalLink, Flame, Focus, Lightbulb, PlaneLanding, PlaneTakeoff, Plus, Star, Menu, PanelRightClose, PanelRightOpen, MoveLeft } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react'
 import { motion } from "framer-motion"
 import { authClient } from '../lib/auth-client';
@@ -75,31 +75,53 @@ function Chat() {
 
 
     if (error) return (
-        <div className='min-h-screen text-3xl font-bold text-red-600 flex justify-center items-center'>
-            <p>{error}</p>
+        <div className="min-h-screen flex justify-center items-center w-full relative">
+            {/* Radial Gradient Background from Top */}
+            <div
+                className="fixed inset-0 z-0"
+                style={{
+                    background: "radial-gradient(125% 125% at 50% 10%, #9b9b88 40%, #475569 100%)",
+                }}
+            />
+            <div className='min-h-screen text-3xl font-bold text-red-600 flex justify-center items-center'>
+                <p>{error}</p>
+            </div>
         </div>
+
     )
 
     if (userId !== dbUserId) return (
-        <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-b from-gray-100 to-gray-300 px-5">
-            <div className="bg-white shadow-xl rounded-xl p-10 border border-gray-200 text-center max-w-lg w-full">
-                <h1 className="text-3xl font-bold text-red-600 mb-4">
-                    Access Denied
-                </h1>
 
-                <p className="text-gray-700 mb-6 text-lg">
-                    You don’t have permission to view this chat.
-                </p>
+        <div className="min-h-screen flex justify-center items-center w-full relative">
+            {/* Radial Gradient Background from Top */}
+            <div
+                className="fixed inset-0 z-0"
+                style={{
+                    background: "radial-gradient(125% 125% at 50% 10%, #9b9b88 40%, #475569 100%)",
+                }}
+            />
 
-                <button
-                    onClick={() => navigate('/')}
-                    className="py-2 px-6 bg-emerald-600 hover:bg-emerald-700 
+            <div className="min-h-screen fixed z-10 m-auto min-w-3/4  flex flex-col justify-center items-center  px-5">
+                <div className="bg-white shadow-xl rounded-xl p-10 border  border-gray-200 text-center max-w-lg w-full">
+                    <h1 className="text-3xl font-bold text-red-600 mb-4">
+                        Access Denied
+                    </h1>
+
+                    <p className="text-gray-700 mb-6 text-lg">
+                        You don’t have permission to view this chat.
+                    </p>
+
+                    <button
+                        onClick={() => navigate('/')}
+                        className="py-2 cursor-pointer px-6 bg-emerald-600 hover:bg-emerald-700 
                        transition-colors text-white font-medium 
                        rounded-md shadow-md"
-                >
-                    Go to Home Page
-                </button>
+                    >
+                        Go to Home Page
+                    </button>
+                </div>
             </div>
+
         </div>
 
 
@@ -141,12 +163,13 @@ function Chat() {
                 </div>
 
                 <div className='mx-auto pt-[72px] max-w-7xl w-full '>
+
                     <div className='flex flex-col'>
                         <div className='flex  justify-center  items-center  bg-black/50  '>
                             {/* ChatBox */}
                             {data &&
                                 <div className='text-white w-full px-5 pb-10'>
-
+                                    <button onClick={() => navigate('/')} className=' flex gap-2 items-center font-bold text-black/50 hover:text-black justify-center fixed top-5 z-50 left-1/2  -translate-x-1/2   bg-emerald-600 rounded-md px-2 py-1 cursor-pointer ' ><MoveLeft />Home</button>
                                     <div className='flex flex-col bg- px-3 py-2 rounded-md  items-center mt-5 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-amber-50 via-orange-100 to-stone-500 border-b border-white'>
                                         <h1 className='border-b text-xl font-mono'>
                                             <span className='mr-2'>Title:</span>

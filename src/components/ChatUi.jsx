@@ -1,15 +1,16 @@
-import { CircleArrowUp, ExternalLink, Flame, Focus, Lightbulb, PlaneLanding, PlaneTakeoff, Plus, Star } from 'lucide-react';
+import { CircleArrowUp, ExternalLink, Flame, Focus, Lightbulb, PlaneLanding, PlaneTakeoff, Plus, PlusCircle, Star } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react'
 import { motion } from "framer-motion"
 import { authClient } from '../lib/auth-client';
 import AirplanePath from '../assets/arrow.svg?react'
 import EmblaCarousel from './Carousel/EmblaCarousel';
 import { useChatId } from '../globalState/chatIdStore.js';
+import { useLocation } from 'react-router-dom';
 
 
 function ChatUi() {
     const [loading, setLoading] = useState(false)
-    const [state, setState] = useState();
+    const [states, setState] = useState();
     const [content, setContent] = useState([])
     const [stateError, setError] = useState();
     const [userMessage, setUserMessage] = useState()
@@ -19,6 +20,7 @@ function ChatUi() {
     const { data: session } = authClient.useSession()
     const userId = session?.user?.id
     const [newChatStatus, setNewChatStatus] = useState()
+    const [task, setTask] = useState()
 
 
     const contentRef = useRef(content)
@@ -26,6 +28,10 @@ function ChatUi() {
     const locationRef = useRef(location)
     const globalChatId = useChatId((state) => state.setChatId)
     const chatIdRef = useRef(chatId)
+
+
+
+
 
 
     async function fetchState() {
@@ -72,6 +78,7 @@ function ChatUi() {
     // Store Chat Detail
     async function storeChat() {
         try {
+            if (!content.length && !photoUrl.length) return
             const response = await fetch(`http://localhost:4001/api/chatStore`, {
                 method: 'POST',
                 headers: {
@@ -147,6 +154,10 @@ function ChatUi() {
     }
 
     function handleChatId() {
+        setContent([])
+        setLocation()
+        setPhotoUrl([])
+        setState()
         const newId = crypto.randomUUID()
         setChatId(newId)
         globalChatId(newId)
@@ -205,12 +216,15 @@ function ChatUi() {
 
 
 
-        <div className='flex flex-col'>
-            <div className='flex  justify-center  items-center  bg-black/50  '>
-                {/* ChatBox */}
-                {state &&
-                    <div className='text-white w-full px-5 pb-10   '>
+        <div className='flex relative flex-col'>
 
+            <div className='flex  justify-center  items-center  bg-black/50  '>
+
+                {/* ChatBox */}
+                {states &&
+
+                    <div className='text-white w-full px-5 pb-10   '>
+                        <button onClick={handleChatId} className=' flex gap-2 items-center font-bold text-black/50 hover:text-black justify-center fixed top-5 z-50 left-1/2  -translate-x-1/2   bg-emerald-600 rounded-md px-2 py-1 cursor-pointer ' ><PlusCircle />New chat</button>
                         <div className='flex flex-col bg- px-3 py-2 rounded-md  items-center mt-5 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-amber-50 via-orange-100 to-stone-500 border-b border-white'>
                             <h1 className='border-b text-xl font-mono'><span className='mr-2'>Title:</span>{content[0].message.planOutline.tripSummary}</h1>
                             <p className='mt-2 text-sm font-light'><span className='font-semibold border-b border-green-600'>Start:</span> {content[0].message.trip?.startingLocation} | <span className='font-semibold border-b border-yellow-600'>Destination:</span> {content[0].message.trip?.destination} | <span className='font-semibold border-b border-red-600'>From</span> [ {content[0].message.trip?.startDate} ] <span className='font-semibold border-b border-red-600'>To</span> [ {content[0].message.trip?.endDate} ]   </p>
@@ -385,9 +399,12 @@ function ChatUi() {
                             ))}
                         </div>
                     </div>}
+
+
+
             </div>
             {/* Bottom textArea */}
-            <div className='fixed px-2 py-10 bg-black/30 rounded-md h-[130px] max-w-7xl w-full  bottom-[7px] flex justify-center backdrop-blur-sm  items-center'>
+            {content.length === 0 && (<div className='fixed px-2 py-10 bg-black/30 rounded-md h-[130px] max-w-7xl w-full  bottom-[7px] flex justify-center backdrop-blur-sm  items-center'>
                 <textarea id='chat'
                     rows={4}
                     autoFocus
@@ -399,7 +416,7 @@ function ChatUi() {
                     whileTap={{ scale: 0.8 }}
                     whileHover={{ scale: 1.2 }} className='ml-5  p-2 cursor-pointer ' onClick={handleCLick}> <CircleArrowUp className='text-white h-[50px] w-[30px]' /></motion.button>
 
-            </div>
+            </div>)}
         </div>
 
 
