@@ -10,6 +10,8 @@ import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
 import { TavilySearch } from "@langchain/tavily";
 import Database from 'better-sqlite3';
 import { setMaxListeners } from 'events';
+import { io } from './server.js';
+import { strict } from "assert";
 setMaxListeners(20);
 
 
@@ -18,6 +20,13 @@ setMaxListeners(20);
 dotenv.config()
 
 const db = new Database('trip.sqlite');
+let chatId=null;
+
+export function setchatId(Id){
+  chatId=Id
+  console.log("hello")
+  console.log("Graph.js hatID",chatId)
+}
 
 
 
@@ -26,8 +35,8 @@ const db = new Database('trip.sqlite');
 
 //Original LLM
 const llm= new ChatGroq({
-     model: "llama-3.3-70b-versatile",
-     temperature:0.3
+     model: "openai/gpt-oss-120b",
+     temperature:0.2
 })
 
 
@@ -136,7 +145,7 @@ const inputState= z.object({
 
 //Llm with structured output for userInput
 
-const userInputLlm= llm.withStructuredOutput(inputState)
+const userInputLlm= llm.withStructuredOutput(inputState,{strict:false})
 
 
 
@@ -148,6 +157,12 @@ const checkPointer = new SqliteSaver(db);
  // userInput function is used to extract the data provided by user in a structured format based on the userInputLlm
  async function userInput(state){
     try{
+      io.to(chatId).emit('agentUpdate',{
+          agent:'User Input Analyzer',
+          type:'input',
+          message:'Analyzing you travel query'
+      })
+
         const {input,trip,validation}= state;
         const humanResponse=validation?.humanResponse || ""
         const inputMessage= input + humanResponse
@@ -159,29 +174,25 @@ const checkPointer = new SqliteSaver(db);
             {
                 role:`system`,
                 content:`You are a part of a travel planner. Your job is to receive the input of the user and provide a structured output from the users input.
-                          You need to extract  {startingLocation: ,destination: , startDate: , endDate : , budget:  } from the users input. If the users input does not provide adequate information you do not add random values, Make the remaining field empty
-                          
-                          for example:[ example1=>(user:Plan me a trip to Tokyo 
-                                        your output : {startingLocation:"", destination:"Tokyo",startDate:"" , endDate :"" , budget:"")})
-
-                                        example2=>(user:Plan me a trip with destination: 'Tokyo' from Nepal,
-                                                    startDate: 'Sun Oct 20 2025',
-                                                    endDate: 'Sun Oct 27 2025',
-                                                    budget: '1000'
-                                                    your output: {startingLocation: 'Nepal'
-                                                                destination: 'Tokyo',
-                                                                startDate: 'Sun Oct 20 2025',
-                                                                endDate: 'Sun Oct 27 2025',
-                                                                budget: '1000'})
-                                                                                    ]
-                            Today's date: ${new Date().toDateString()}
-                          `
+                          You need to extract the following fields: startingLocation, destination, startDate, endDate, budget.
+                          If the users input does not provide adequate information you do not add random values, Make the remaining field empty.
+                          Today's date: ${new Date().toDateString()}`
             }
 
         ]
 
         const response= await userInputLlm.invoke(messages)
         
+         io.to(chatId).emit('agentUpdate',{
+          agent:'User Input Analyzer',
+          type:'output',
+          message:`🏠 From: ${response.startingLocation || 'Not specified'}
+                    ✈️ To: ${response.destination || 'Not specified'}
+                    📅 Start: ${response.startDate || 'Not specified'}
+                    📅 End: ${response.endDate || 'Not specified'}
+                    💰 Budget: ${response.budget || 'Not specified'}`
+      })
+
 
         return {trip:response}
 
@@ -225,6 +236,9 @@ async function check(state){
 
 //webSearch tool execute
 async function webSearch(state){
+
+    
+
     const {toolCallMessage,input,trip}=state
     const {startDate,startingLocation,endDate,destination,budget}=trip
 
@@ -240,6 +254,11 @@ async function webSearch(state){
     
 
     try{
+       io.to(chatId).emit('agentUpdate',{
+          agent:'Web Search Agent',
+          type:'input',
+          message:'Searching the web to plan the best trip for you'
+      })
         //invoking the llm to generate the query for searching
     const webResponse= await webSearchLlm.invoke(message)
 
@@ -376,6 +395,12 @@ new HumanMessage(`Now analyze the search results above and provide a comprehensi
 
     const finalResponse= await llm.invoke(finalMessage)
 
+     io.to(chatId).emit('agentUpdate',{
+          agent:'Web Search Agent',
+          type:'output',
+          message:JSON.stringify(finalResponse.content, null, 2) 
+      })
+
    return {toolCallMessage:finalResponse.content}
 
     }catch(error){console.log(error)}
@@ -406,7 +431,7 @@ new HumanMessage(`Now analyze the search results above and provide a comprehensi
     })
 
     //Making the llm equiped with the planOutlineStructre
-    const planOutlineLlm= llm.withStructuredOutput(planOutlineStructure)
+    const planOutlineLlm= llm.withStructuredOutput(planOutlineStructure,{strict:false})
     
 
 
@@ -429,18 +454,33 @@ Focus on producing a logical, day-by-day structure** that will later be expanded
 
 You are equipped with webSearch tools, so Search for proper information in the web to find out about the major attractions, things to do , fun activities etc. So that you can plan your outline properly
 
+###Caution
+
 ### Rules
+
 1. Keep the plan **chronologically structured** by days.
 2. Each day should have a **title** and a short **description** of the main activities or goals.
 3. Do not include specific restaurant, hotel, or booking details — only the general flow.
-4. The tone should be friendly, organized, and realistic.`)
+4. The tone should be friendly, organized, and realistic.
+5. Keep the trip Summary as short as possible`)
     ]
 
     try{
+      io.to(chatId).emit('agentUpdate',{
+          agent:'Plan Outline Agent',
+          type:'input',
+          message:'Creating a surface level plan for your trip'
+      })
+
+
         const response= await planOutlineLlm.invoke(message)
 
       
-
+          io.to(chatId).emit('agentUpdate',{
+          agent:'Plan Outline Agent',
+          type:'output',
+          message: JSON.stringify(response, null, 2) 
+      })
         return { planOutline:response}
     }catch(error){
         console.log(error)
@@ -482,7 +522,7 @@ const flightGenStructure =  z.object({
       stops: z.number().describe("Number of stops (0 = direct)"),
       price: z.number().describe("Flight price in USD"),
       recommendation: z.string().optional().describe("Label such as 'Best Value' or 'Fastest'"),
-      bookingLink: z.string().url().optional().describe("Booking page URL if available")
+      bookingLink: z.string().optional().describe("Booking page URL if available")
     })
   ).describe("List of outbound flight options"),
 
@@ -495,17 +535,23 @@ const flightGenStructure =  z.object({
       stops: z.number().describe("Number of stops (0 = direct)"),
       price: z.number().describe("Flight price in USD"),
       recommendation: z.string().optional().describe("Label such as 'Best Value' or 'Fastest'"),
-      bookingLink: z.string().url().optional().describe("Booking page URL if available")
+      bookingLink: z.string().optional().describe("Booking page URL if available")
     })
   ).describe("List of return flight options")
 });
 
 
 
-const flightToolStructured=llm.withStructuredOutput(flightGenStructure)
+const flightToolStructured=llm.withStructuredOutput(flightGenStructure,{strict:false})
 
 async function flightGen(state){
     try{
+
+       io.to(chatId).emit('agentUpdate',{
+          agent:'Flight Generation Agent',
+          type:'input',
+          message:'Looking up for flights'
+      })
         const{trip,planOutline}=state
         const { tripSummary,start,end,startingLocation,destination,duration,budget,days}= planOutline
 
@@ -529,45 +575,36 @@ async function flightGen(state){
 
     })
 
-    const finalMessage=[new SystemMessage(`You are a specialized Flight Search and Aggregation Agent, designed to collect, analyze, and return detailed flight information for a given route and travel dates.
-You ar eprovided with web search result from various flight data sources to find the most relevant outbound and return flights for a travele's itinerary. You are not a conversational agent — your only purpose is to return structured, factual, and consistent flight data.
+    const finalMessage=[new SystemMessage(`You are a specialized Flight Search Agent.
+Your goal is to analyze flight search results and return a structured list of outbound and return flights.
 
-🎯 Core Responsibilities
+Rank options by:
+1. Shortest duration
+2. Best price/convenience balance
+3. Airline reliability
 
-Interpret the use's travel intent and extract:
+Return ONLY the structured data matching the schema. No commentary.`),
 
-Origin city and airport
-
-Destination city and airport
-
-Start date (departure date)
-
-Return date (arrival back date)
-
-
-
-Rank flight options based on:
-
-Shortest duration
-
-Best balance between price and convenience (e.g., minimal layovers)
-
-Popular or reliable airlines
-
-Return the information in the required schema only — with no extra commentary, explanations, or natural language descriptions.`),
-
-new HumanMessage(`For a travel plan ,Find out the available flight: Both outbound and return flights  [from:${startingLocation}, to: ${destination}, startingDate: ${start}, endingDate: ${end}, tripSummary:${tripSummary}`),
+new HumanMessage(`Find available flights:
+From: ${startingLocation}
+To: ${destination}
+Dates: ${start} - ${end}
+Summary: ${tripSummary}`),
 
 queryLlm,
 toolMessage,
-new HumanMessage(`With the available information provide a structured output for the fligt : tripSummary:[${tripSummary}`)
+new HumanMessage(`Generate structured flight data based on the above results.`)
 ]
 
-const finalResponse=await flightToolStructured.invoke(finalMessage)
+const finalResponse=await flightToolStructured.invoke(finalMessage,{strict:false})
 console.log(finalResponse)
 
 
-
+ io.to(chatId).emit('agentUpdate',{
+          agent:'Plan Outline Agent',
+          type:'output',
+          message: JSON.stringify(finalResponse, null, 2) 
+      })
 
 return { flightAgent:finalResponse}
 
@@ -595,108 +632,46 @@ const dailyActivityTripStructure = z.object({
   ).describe("Array of daily itinerary items")
 }).describe("Structured daily itinerary for the trip");
 
-const dailyActivityLlm = llm.withStructuredOutput(dailyActivityTripStructure);
+const dailyActivityLlm = llm.withStructuredOutput(dailyActivityTripStructure,{strict:false});
 
 async function dailyActivityGen(state) {
   const { toolCallMessage, planOutline } = state;
   const { tripSummary, start, end, startingLocation, destination, duration, budget, days } = planOutline;
 
   try {
+
+    io.to(chatId).emit('agentUpdate',{
+          agent:'Daily Activity Agent',
+          type:'input',
+          message:'Planning your daily activities'
+      })
     const messages = [
-      new SystemMessage(`
-You are a travel itinerary generator. 
-Your goal is to create a list of daily activities for a trip, formatted strictly according to the provided schema.
-The description of each activity should be descriptive enough, and full fo information. Do not write one line description
-Examples:
-{
-    days: [
-    {
-      day: 1,
-      date: "2024-03-10",
-      title: "Arrival and Historic District Exploration",
-      activities: [
-        {
-          time: "Morning",
-          description: "Arrive at the international airport and take a pre-booked private transfer to your downtown hotel. Check in, unpack, and take some time to freshen up after your long journey. Get acquainted with the hotel amenities and ask the concierge for local recommendations.",
-          location: "International Airport & Grand City Hotel",
-          focusArea: "Transportation & Settling In",
-          tips: "Have some local currency ready for tips and keep your passport easily accessible during hotel check-in process"
-        },
-        {
-          time: "Afternoon",
-          description: "Embark on a guided walking tour through the historic old town district, visiting ancient cathedrals, medieval town squares, and hidden alleyways filled with local artisans. Learn about the city's rich history dating back 800 years and see architectural marvels from different eras.",
-          location: "Historic Old Town District",
-          focusArea: "Cultural Sightseeing & History",
-          tips: "Wear comfortable walking shoes and bring a reusable water bottle. The cobblestone streets can be uneven so watch your step"
-        },
-        {
-          time: "Evening",
-          description: "Enjoy a welcome dinner at a traditional restaurant featuring authentic local cuisine. Sample regional specialties prepared with fresh, seasonal ingredients while experiencing the warm hospitality and charming ambiance of a family-owned establishment that has been operating for generations.",
-          location: "Traditional Local Restaurant",
-          focusArea: "Culinary Experience & Dining",
-          tips: "Don't be afraid to try unfamiliar dishes - ask your server for recommendations based on your preferences"
-        }
-      ]
-    },
-    {
-      day: 2,
-      date: "2024-03-11",
-      title: "Museum Day and Cultural Immersion",
-      activities: [
-        {
-          time: "Morning",
-          description: "Spend the morning exploring the world-renowned National Art Museum, home to an extensive collection of classical and contemporary works. Take a guided tour focusing on the most significant pieces and learn about the artistic movements that shaped the country's cultural identity over centuries.",
-          location: "National Art Museum",
-          focusArea: "Art Appreciation & Culture",
-          tips: "Book the early morning tour to avoid crowds and consider renting an audio guide for in-depth commentary"
-        },
-        {
-          time: "Afternoon",
-          description: "Participate in an interactive cooking class where you'll learn to prepare traditional dishes from scratch. Visit a local market with your chef instructor to select fresh ingredients, then master cooking techniques passed down through generations while enjoying the fruits of your labor for lunch.",
-          location: "Cooking School & Local Market",
-          focusArea: "Hands-on Culinary Experience",
-          tips: "Take notes during the class and don't hesitate to ask questions - the recipes make great souvenirs to recreate at home"
-        },
-        {
-          time: "Evening",
-          description: "Attend a spectacular cultural performance featuring traditional music, dance, and costumes at the historic city theater. Experience the vibrant storytelling through movement and sound that has been preserved for centuries, showcasing the diverse ethnic traditions of the region.",
-          location: "City Performing Arts Theater",
-          focusArea: "Cultural Entertainment",
-          tips: "Arrive 30 minutes early to explore the beautiful theater architecture and read about the performance in the program guide"
-        }
-      ]
-    },
-}
+      new SystemMessage(`You are a travel itinerary generator.
+Create a detailed day-by-day activity list based on the trip summary and location.
+Split each day into Morning, Afternoon, and Evening.
+Ensure descriptions are descriptive and useful.
+Follow the schema strictly.`),
 
-Rules:
-- Return **only** the required JSON array.
-- Do **not** write any commentary, markdown, or line-breaks.
-- Keep every field short and concise.
-
-      `),
-
-      new HumanMessage(`
-Generate structured daily activities for the following trip:
-
-Trip Summary: ${tripSummary}
-Travel Dates: ${start} → ${end}
-From: ${startingLocation}
-To: ${destination}
+      new HumanMessage(`Generate daily activities:
+Trip: ${tripSummary}
+Dates: ${start} to ${end}
+Route: ${startingLocation} -> ${destination}
 Duration: ${duration} days
 Budget: ${budget}
-Days Info: ${JSON.stringify(days, null, 2)}
-
-Additional Info: ${toolCallMessage}
-
-Return only valid structured data that conforms exactly to the schema.
-      `),
+Days Outline: ${JSON.stringify(days)}
+Context: ${toolCallMessage}`)
     ];
 
     console.log("DaysiNfo",JSON.stringify(days, null, 2))
-    console.log(toolCallMessage)
+    
 
     const response = await dailyActivityLlm.invoke(messages);
     console.log(response)
+       io.to(chatId).emit('agentUpdate',{
+          agent:'Daily Activity Agent',
+          type:'input',
+          message:JSON.stringify(response, null, 2)
+      })
      return { dailyActivity: response };
 
   } catch (error) {
@@ -712,7 +687,7 @@ const locationStructure=z.object({
        z.string().describe("A unique location name")
   ).describe('List of unique locations')
 })
-const locationllm=llm.withStructuredOutput(locationStructure)
+const locationllm=llm.withStructuredOutput(locationStructure,{strict:false})
 
 
 const hotelsStructure = z.object({
@@ -735,7 +710,7 @@ const hotelsStructure = z.object({
     })
   ).describe("List of selected hotels for each day of the trip")
 });
-const hotelLlm= llm.withStructuredOutput(hotelsStructure)
+const hotelLlm= llm.withStructuredOutput(hotelsStructure,{strict:false})
 
 //Hotel generation or searching for available location
 async function hotelGen(state){
@@ -743,61 +718,18 @@ async function hotelGen(state){
   const {budget}=trip
  
 
-  const messages= [new SystemMessage(`You are a smart assistant responsible for extracting all unique *stay or overnight locations* from a structured trip outline.
-
-Your goal is to return an array of places where the traveler is likely to stay or spend the night during the trip. 
-Do NOT include:
-- The user's starting location (e.g., their home city or country)
-
-
-Use reasoning from the provided structured information — especially the “title”, “description”, and “focusArea” fields — to identify the most likely overnight or main base locations for each day.
-
-Example:
-
-Input:
-[
-  {
-    "tripSummary": "A 5-day budget-friendly trip exploring Tokyo’s modern and traditional culture.",
-    "destination": "Tokyo",
-    "days": [
-      { "day": 1, "title": "Arrival and Orientation", "description": "Arrive in Tokyo, check into hotel...", "focusArea": "Arrival / Light exploration" },
-      { "day": 2, "title": "Cultural Exploration", "description": "Visit Asakusa district, Senso-ji Temple...", "focusArea": "Culture" },
-      { "day": 4, "title": "Day Trip Adventure", "description": "Take a day trip to Yokohama or Mount Fuji area for scenic views.", "focusArea": "Nature / Excursion" }
-    ]
-  }
-]
-
-Output:
-["Tokyo", "Yokohama"]
-
----
-
-Now, for this input:
-{
-  "planOutline": {
-    "tripSummary": "5-day trip to Greece",
-    "start": "Sat Oct 25 2025",
-    "end": "Thu Oct 30 2025",
-    "startingLocation": "Kathmandu, Nepal",
-    "destination": "Greece",
-    "duration": "5",
-    "budget": "1000",
-    "days": [
-      { "day": "1", "title": "Arrival in Athens", "description": "Arrive in Athens, explore the city, and visit the Acropolis", "focusArea": "Acropolis" },
-      { "day": "2", "title": "Athens Exploration", "description": "Visit the Temple of Olympian Zeus and other historic sites in Athens", "focusArea": "Temple of Olympian Zeus" },
-      { "day": "3", "title": "Navagio Beach", "description": "Travel to Zakynthos and visit the secluded Navagio Beach", "focusArea": "Navagio Beach" },
-      { "day": "4", "title": "Santorini Exploration", "description": "Travel to Santorini, explore the village of Oia, and enjoy the stunning views", "focusArea": "Oia Village" },
-      { "day": "5", "title": "Mykonos Beach Party", "description": "Travel to Mykonos, enjoy the beach parties, and relax on the beautiful beaches", "focusArea": "Mykonos Beach" }
-    ]
-  }
-}
-
-Expected Output:
-["Athens", "Zakynthos", "Santorini", "Mykonos"]`),
-    new HumanMessage(`Extract as many unique location as possible in a array from the information :${JSON.stringify(planOutline)}`)
+  const messages= [new SystemMessage(`Extract all unique *stay or overnight locations* from the trip outline.
+Return ONLY an array of strings (locations).
+Do NOT include the starting location.
+Infer locations from the daily titles and descriptions.`),
+    new HumanMessage(`Extract unique stay locations from: ${JSON.stringify(planOutline)}`)
     ]
 
-
+     io.to(chatId).emit('agentUpdate',{
+          agent:'Hotel Finder Agent',
+          type:'input',
+          message:'Finding out the best hotels for you'
+      })
 
   const response=await   locationllm.invoke(messages)
 
@@ -811,121 +743,25 @@ const toolCallResponse = await Promise.all(
 
 
 
-  const hotelMessages=[new SystemMessage(`Your are a smart assistant that is responsible for extracting all the information about hotels in particulat location in a particular day using the information that will be already provided to you in a structured format
-          You are a smart travel assistant AI. Your task is to select **one hotel per day** for a user's trip based on the trip outline provided.  
-
-Rules:  
-1. Only suggest **one hotel per day**.  
-2. The hotel should be in the **main location where the user is likely staying that day**. Do not include hotels in side-trip or sightseeing locations.  
-3. Use the user's **budget** to filter the hotel recommendations.  
-4. Include the following information for each hotel:  
-   - name  
-   - pricePerNight (if available)  
-   - rating (if available)  
-   - link (if available)  
-   - short description (if available)  
-5. Keep the suggestions realistic and appropriate for the type of trip (budget, mid-range, luxury). \n
-
-  Example 1:
-
-   {
-  "hotels": [
-    {
-      "day": 1,
-      "location": "Athens",
-      "hotel": {
-        "name": "Athens Plaza Hotel",
-        "pricePerNight": "$120",
-        "rating": "4.5",
-        "description": "Centrally located near Syntagma Square."
-      }
-    },
-    {
-      "day": 2,
-      "location": "Santorini",
-      "hotel": {
-        "name": "Oia Blue Hotel",
-        "pricePerNight": "$150",
-        "rating": "4.8",
-        "description": "Beautiful caldera views and infinity pool."
-      }
-    },
-    {
-      "day": 3,
-      "location": "Zakynthos",
-      "hotel": {
-        "name": "Klelia Beach Hotel",
-        "pricePerNight": "$90",
-        "rating": "4.2",
-        "description": "Comfortable rooms with free Wi-Fi, close to the beach."
-      }
-    },
-    {
-      "day": 4,
-      "location": "Delphi",
-      "hotel": {
-        "name": "Delphi Inn",
-        "pricePerNight": "$100",
-        "rating": "4.0",
-        "description": "Cozy and affordable hotel near main attractions."
-      }
-    },
-    {
-      "day": 5,
-      "location": "Meteora",
-      "hotel": {
-        "name": "Toti Boutique Rooms",
-        "pricePerNight": "$55",
-        "rating": "4.7",
-        "description": "Boutique hotel with a great view of Meteora."
-      }
-    }
-  ]
-}
-
-
-Example 2: 
- {
-  hotels: [
-    {
-      day: 1,
-      location: "Kathmandu",
-      hotel: {
-        name: "Hotel Yak & Yeti",
-        pricePerNight: "120 USD",
-        rating: "4.5",
-        description: "Luxury hotel with modern amenities."
-      }
-    },
-    {
-      day: 2,
-      location: "Pokhara",
-      hotel: {
-        name: "Hotel Landmark",
-        pricePerNight: "",    // not available → empty string
-        rating: "",           // not available → empty string
-        description: ""       // not available → empty string
-      }
-    },
-    {
-      day: 3,
-      location: "Chitwan",
-      hotel: {
-        name: "Wildlife Resort",
-        pricePerNight: "",    // empty string for unavailable info
-        rating: "",
-        description: ""
-      }
-    }
-  ]
-}
-Do NOT include explanations, tags, or extra text.
-    `),
-  new HumanMessage(`Extract the hotel information for the location: [${JSON.stringify(response.location)}] .Using the available information \n
-                     [${ JSON.stringify(toolCallResponse)} ]. For a trip that is planned as such [${JSON.stringify(planOutline)}]`)
+  const hotelMessages=[new SystemMessage(`Select **one hotel per day** based on the location and budget.
+Rules:
+1. One hotel per day.
+2. Must be in the day's main location.
+3. Respect the budget.
+4. Return structured data only.`),
+  new HumanMessage(`Select hotels for:
+Locations: ${JSON.stringify(response.location)}
+Search Results: ${JSON.stringify(toolCallResponse)}
+Trip Outline: ${JSON.stringify(planOutline)}`)
   ]
 
          const response2= await hotelLlm.invoke(hotelMessages)
+
+            io.to(chatId).emit('agentUpdate',{
+          agent:'Hotel Agent',
+          type:'input',
+          message:JSON.stringify(response2, null, 2)
+      })
 
          return {locations:response,hotelsGen:response2}
 }
@@ -1030,3 +866,4 @@ export async function regularCall(question){
          }
         }
  }
+
