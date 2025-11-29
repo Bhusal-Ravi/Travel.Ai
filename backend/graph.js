@@ -398,7 +398,7 @@ new HumanMessage(`Now analyze the search results above and provide a comprehensi
      io.to(chatId).emit('agentUpdate',{
           agent:'Web Search Agent',
           type:'output',
-          message:JSON.stringify(finalResponse.content, null, 2) 
+          message:finalResponse.content
       })
 
    return {toolCallMessage:finalResponse.content}
@@ -479,7 +479,7 @@ You are equipped with webSearch tools, so Search for proper information in the w
           io.to(chatId).emit('agentUpdate',{
           agent:'Plan Outline Agent',
           type:'output',
-          message: JSON.stringify(response, null, 2) 
+          message: response
       })
         return { planOutline:response}
     }catch(error){
@@ -583,7 +583,9 @@ Rank options by:
 2. Best price/convenience balance
 3. Airline reliability
 
-Return ONLY the structured data matching the schema. No commentary.`),
+
+
+Return ONLY the JSON object, no other text or explanation.`),
 
 new HumanMessage(`Find available flights:
 From: ${startingLocation}
@@ -603,7 +605,7 @@ console.log(finalResponse)
  io.to(chatId).emit('agentUpdate',{
           agent:'Plan Outline Agent',
           type:'output',
-          message: JSON.stringify(finalResponse, null, 2) 
+          message: finalResponse
       })
 
 return { flightAgent:finalResponse}
@@ -670,7 +672,7 @@ Context: ${toolCallMessage}`)
        io.to(chatId).emit('agentUpdate',{
           agent:'Daily Activity Agent',
           type:'input',
-          message:JSON.stringify(response, null, 2)
+          message:response
       })
      return { dailyActivity: response };
 
@@ -719,9 +721,13 @@ async function hotelGen(state){
  
 
   const messages= [new SystemMessage(`Extract all unique *stay or overnight locations* from the trip outline.
-Return ONLY an array of strings (locations).
+You must return ONLY a valid JSON array of location strings, nothing else.
 Do NOT include the starting location.
-Infer locations from the daily titles and descriptions.`),
+Infer locations from the daily titles and descriptions.
+
+Example output format: ["Paro", "Thimphu", "Punakha"]
+
+Return ONLY the JSON array, no other text or explanation.`),
     new HumanMessage(`Extract unique stay locations from: ${JSON.stringify(planOutline)}`)
     ]
 
@@ -758,9 +764,9 @@ Trip Outline: ${JSON.stringify(planOutline)}`)
          const response2= await hotelLlm.invoke(hotelMessages)
 
             io.to(chatId).emit('agentUpdate',{
-          agent:'Hotel Agent',
+          agent:'Hotel Finder Agent',
           type:'input',
-          message:JSON.stringify(response2, null, 2)
+          message:response2
       })
 
          return {locations:response,hotelsGen:response2}

@@ -24,6 +24,8 @@ function ChatUi() {
     const [task, setTask] = useState()
     const [update, setUpdate] = useState([])
     const [socketConnected, setSocketConnected] = useState(false)
+    const [agent, setAgent] = useState()
+    const agentRef = useRef(agent)
 
     const contentRef = useRef(content)
     const photoRef = useRef(photoUrl)
@@ -272,15 +274,50 @@ function ChatUi() {
         <div className=''>
 
             {update &&
-                <div className='flex flex-col gap-2 p-10  bg-black/50  '>
+                <div className='flex flex-col gap p-10  bg-black/50  '>
 
 
                     {update.filter((item) => item.agent != "Daily Activity Agent" && item.agent != "Flight Generation Agent" && item.agent != "Hotel Finder Agent")
+                        .map((item, index, arr) => {
+                            const prev = arr[index - 1];
+                            const agentChanged = !prev || prev.agent !== item.agent;
+                            return (<div className={`mr-auto w-full bg-black/90  flex flex-col ${agentChanged ? 'mt-5' : ''}`} key={index}>
+                                <h1 className={`text-white justify-center items-center flex font-bold text-xl ${item.type === 'input' ? '' : 'hidden'}`}><Bot className='mr-5' />Agent: {item?.agent}</h1>
+                                <p className={`text-white mt-5  whitespace-pre-wrap font-mono text-sm ${item.type === 'input' ? 'animate-pulse' : ''}`}>Task: {typeof item?.message === 'object' ? JSON.stringify(item.message, null, 2) : item?.message}</p>
+                            </div>)
+
+                        })
+                    }
+
+
+                    {update.filter((item) => item.agent == "Daily Activity Agent")
                         .map((item, index) => (
 
                             <div className='mr-auto  flex flex-col' key={index}>
-                                <h1 className={`text-white justify-center items-center flex font-bold text-xl ${item.type === 'input' ? '' : 'hidden'}`}><Bot className='mr-5' />Agent: {item.agent.trim()}</h1>
-                                <p className='text-white mt-5 mb-5'>Task: {item.message.trim()}</p>
+                                <h1 className={`text-white justify-center items-center flex font-bold text-xl ${item.type === 'input' ? '' : 'hidden'}`}><Bot className='mr-5' />Agent: {item?.agent}</h1>
+                                <pre className='text-white mt-5 mb-5 whitespace-pre-wrap font-mono text-sm'>Task: {typeof item?.message === 'object' ? JSON.stringify(item.message, null, 2) : item?.message}</pre>
+                            </div>
+
+                        ))
+                    }
+
+                    {update.filter((item) => item.agent == "Hotel Finder Agent")
+                        .map((item, index) => (
+
+                            <div className='mr-auto  flex flex-col' key={index}>
+                                <h1 className={`text-white justify-center items-center flex font-bold text-xl ${item.type === 'input' ? '' : 'hidden'}`}><Bot className='mr-5' />Agent: {item?.agent}</h1>
+                                <pre className='text-white mt-5 mb-5 whitespace-pre-wrap font-mono text-sm'>Task: {typeof item?.message === 'object' ? JSON.stringify(item.message, null, 2) : item?.message}</pre>
+                            </div>
+
+                        ))
+                    }
+
+                    {update.filter((item) => item.agent == "Flight Generation Agent")
+                        .map((item, index) => (
+
+                            <div className='mr-auto  flex flex-col' key={index}>
+                                <h1 className={`text-white justify-center items-center flex font-bold text-xl ${item.type === 'input' ? '' : 'hidden'}`}><Bot className='mr-5' />Agent: {item?.agent}</h1>
+                                <pre className='text-white mt-5 mb-5 whitespace-pre-wrap font-mono text-sm'>Task: {typeof item?.message === 'object' ? JSON.stringify(item.message, null, 2) : item?.message}</pre>
                             </div>
 
                         ))
