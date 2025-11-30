@@ -186,7 +186,7 @@ const checkPointer = new SqliteSaver(db);
          io.to(chatId).emit('agentUpdate',{
           agent:'User Input Analyzer',
           type:'output',
-          message:`🏠 From: ${response.startingLocation || 'Not specified'}
+          message:` 🏠 From: ${response.startingLocation || 'Not specified'}
                     ✈️ To: ${response.destination || 'Not specified'}
                     📅 Start: ${response.startDate || 'Not specified'}
                     📅 End: ${response.endDate || 'Not specified'}
@@ -603,7 +603,7 @@ console.log(finalResponse)
 
 
  io.to(chatId).emit('agentUpdate',{
-          agent:'Plan Outline Agent',
+          agent:'Flight Generation Agent',
           type:'output',
           message: finalResponse
       })
@@ -671,7 +671,7 @@ Context: ${toolCallMessage}`)
     console.log(response)
        io.to(chatId).emit('agentUpdate',{
           agent:'Daily Activity Agent',
-          type:'input',
+          type:'output',
           message:response
       })
      return { dailyActivity: response };
@@ -765,7 +765,7 @@ Trip Outline: ${JSON.stringify(planOutline)}`)
 
             io.to(chatId).emit('agentUpdate',{
           agent:'Hotel Finder Agent',
-          type:'input',
+          type:'output',
           message:response2
       })
 

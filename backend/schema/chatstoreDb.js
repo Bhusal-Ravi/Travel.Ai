@@ -13,6 +13,10 @@ const ChatStoreSchema= new mongoose.Schema({
     type: Array, // stores an object
     required: true,
   },
+  update:{
+    type: Array, // stores an object
+    required: true,
+  },
    userId:{
           type: mongoose.Schema.Types.ObjectId,
           ref:'User'

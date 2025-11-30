@@ -6,14 +6,14 @@ const router=express.Router()
 
 router.post('/chatstore',async(req,res)=>{
     try{
-        const {content,photoUrl,userId,chatId}=req.body
+        const {content,update,photoUrl,userId,chatId}=req.body
         
         console.log("ChatStorageContent ",content)
         console.log("ChatStoragePhoto",photoUrl)
         const title= content[0]?.message?.planOutline?.tripSummary
 
         const response= await ChatStorage.create({
-            content,photoUrl,userId,chatId
+            content,photoUrl,update,userId,chatId
         })
         console.log(response)
 
