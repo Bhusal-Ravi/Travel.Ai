@@ -1,4 +1,4 @@
-import { CircleArrowUp, ExternalLink, Flame, Focus, Lightbulb, PlaneLanding, PlaneTakeoff, Plus, Star, Menu, PanelRightClose, PanelRightOpen, MoveLeft } from 'lucide-react';
+import { CircleArrowUp, ExternalLink, Flame, Focus, Lightbulb, PlaneLanding, PlaneTakeoff, Plus, Star, Menu, PanelRightClose, PanelRightOpen, MoveLeft, Bot } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react'
 import { motion } from "framer-motion"
 import { authClient } from '../lib/auth-client';
@@ -7,6 +7,15 @@ import EmblaCarousel from './Carousel/EmblaCarousel';
 import { useNavigate, useParams } from 'react-router-dom';
 import Logout from './Logout';
 import Sidebar from './Sidebar';
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "../components/ui/accordion"
+import Markdown from 'react-markdown'
+import ReactJson from 'react-json-view'
+import AccordionMenue from './Accordion';
 
 function Chat() {
     const { chatId } = useParams()
@@ -18,6 +27,7 @@ function Chat() {
     const [photoUrl, setPhotoUrl] = useState([])
     const [dbUserId, setdbUserId] = useState()
     const [sideBar, setSideBar] = useState(false)
+    const [update, setUpdate] = useState([])
 
     const { data: session } = authClient.useSession()
     const userId = session?.user?.id
@@ -47,6 +57,7 @@ function Chat() {
             setContent(result.message.content)
             setPhotoUrl(result.message.photoUrl)
             setdbUserId(result.message.userId)
+            setUpdate(result.message.update)
             console.log(result)
             console.log("userdb:", result.message.userId)
             console.log("loggedinuser:", userId)
@@ -165,6 +176,87 @@ function Chat() {
                 <div className='mx-auto pt-[72px] max-w-7xl w-full '>
 
                     <div className='flex flex-col'>
+
+                        {/* Top Accordion */}
+
+                        {update &&
+                            <div className='w-full mt-[20px]   '>
+                                <Accordion type="single" className='border border-white bg-black/90 rounded-sm p-2 cursor-pointer' collapsible>
+                                    <AccordionItem value="item-1">
+                                        <AccordionTrigger className="text-white flex justify-center items-center cursor-pointer text-lg font-semibold">Agentic Work Flow<span className="text-white/50 font-extralight text-sm">Click to expand / close</span></AccordionTrigger>
+                                        <AccordionContent className="text-white text-white/50 max-h-[500px] overflow-y-auto ">
+                                            <div className='bg-black/20'>
+
+                                                {update &&
+                                                    <div className='flex flex-col border-l-5 border-dashed border-yellow-400 gap mx-5 px-7  bg-black/50  '>
+
+
+                                                        {update.filter((item) => item.agent != "Daily Activity Agent" && item.agent != "Flight Generation Agent" && item.agent != "Hotel Finder Agent")
+                                                            .map((item, index, arr) => {
+                                                                const prev = arr[index - 1];
+                                                                const agentChanged = !prev || prev.agent !== item.agent;
+                                                                return (<div className={`mr-auto relative w-full bg-black/50    p-3  flex flex-col ${agentChanged ? 'mt-5' : ''}`} key={index}>
+                                                                    <div className={`absolute top-0 left-0 translate-x-[-25px] ${item.type === 'input' ? '' : 'hidden'}`}  >🟡</div>
+                                                                    <h1 className={`text-white flex font-bold text-xl ${item.type === 'input' ? '' : 'hidden'}`}><Bot className='mr-5' />Agent: {item?.agent}</h1>
+                                                                    {item.type === 'input' ? (<p className={` mt-5 flex  whitespace-pre-wrap font-extralight text-sm ${item.type === 'input' ? 'animate-pulse text-white' : 'text-white/50'}`}>Task: {typeof item?.message === 'object' ? JSON.stringify(item.message, null, 2) : item?.message}</p>) : (<AccordionMenue message={item.message} title={"Output of " + item.agent} />)}
+                                                                </div>)
+
+                                                            })
+                                                        }
+
+
+                                                        {update.filter((item) => item.agent == "Daily Activity Agent")
+                                                            .map((item, index, arr) => {
+                                                                const prev = arr[index - 1];
+                                                                const agentChanged = !prev || prev.agent !== item.agent;
+                                                                return (<div className={`mr-auto relative w-full bg-black/50    p-3  flex flex-col ${agentChanged ? 'mt-5' : ''}`} key={index}>
+                                                                    <div className={`absolute top-0 left-0 translate-x-[-25px] ${item.type === 'input' ? '' : 'hidden'}`}  >🟡</div>
+                                                                    <h1 className={`text-white flex font-bold text-xl ${item.type === 'input' ? '' : 'hidden'}`}><Bot className='mr-5' />Agent: {item?.agent}</h1>
+                                                                    {item.type === 'input' ? (<p className={` mt-5 flex  whitespace-pre-wrap font-extralight text-sm ${item.type === 'input' ? 'animate-pulse text-white' : 'text-white/50'}`}>Task: {typeof item?.message === 'object' ? JSON.stringify(item.message, null, 2) : item?.message}</p>) : (<AccordionMenue message={item.message} title={"Output of " + item.agent} />)}
+                                                                </div>)
+
+                                                            })
+                                                        }
+
+                                                        {update.filter((item) => item.agent == "Hotel Finder Agent")
+                                                            .map((item, index, arr) => {
+                                                                const prev = arr[index - 1];
+                                                                const agentChanged = !prev || prev.agent !== item.agent;
+                                                                return (<div className={`mr-auto relative w-full bg-black/50    p-3  flex flex-col ${agentChanged ? 'mt-5' : ''}`} key={index}>
+                                                                    <div className={`absolute top-0 left-0 translate-x-[-25px] ${item.type === 'input' ? '' : 'hidden'}`}  >🟡</div>
+                                                                    <h1 className={`text-white flex font-bold text-xl ${item.type === 'input' ? '' : 'hidden'}`}><Bot className='mr-5' />Agent: {item?.agent}</h1>
+                                                                    {item.type === 'input' ? (<p className={` mt-5 flex  whitespace-pre-wrap font-extralight text-sm ${item.type === 'input' ? 'animate-pulse text-white' : 'text-white/50'}`}>Task: {typeof item?.message === 'object' ? JSON.stringify(item.message, null, 2) : item?.message}</p>) : (<AccordionMenue message={item.message} title={"Output of " + item.agent} />)}
+                                                                </div>)
+
+                                                            })
+                                                        }
+
+                                                        {update.filter((item) => item.agent == "Flight Generation Agent")
+                                                            .map((item, index, arr) => {
+                                                                const prev = arr[index - 1];
+                                                                const agentChanged = !prev || prev.agent !== item.agent;
+                                                                return (<div className={`mr-auto relative w-full bg-black/50    p-3  flex flex-col ${agentChanged ? 'mt-5' : ''}`} key={index}>
+                                                                    <div className={`absolute top-0 left-0 translate-x-[-25px] ${item.type === 'input' ? '' : 'hidden'}`}  >🟡</div>
+                                                                    <h1 className={`text-white flex font-bold text-xl ${item.type === 'input' ? '' : 'hidden'}`}><Bot className='mr-5' />Agent: {item?.agent}</h1>
+                                                                    {item.type === 'input' ? (<p className={` mt-5 flex  whitespace-pre-wrap font-extralight text-sm ${item.type === 'input' ? 'animate-pulse text-white' : 'text-white/50'}`}>Task: {typeof item?.message === 'object' ? JSON.stringify(item.message, null, 2) : item?.message}</p>) : (<AccordionMenue message={item.message} title={"Output of " + item.agent} />)}
+                                                                </div>)
+
+                                                            })
+                                                        }
+
+
+
+
+
+                                                    </div>}
+
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                </Accordion>
+                            </div>
+                        }
+
                         <div className='flex  justify-center  items-center  bg-black/50  '>
                             {/* ChatBox */}
                             {data &&
