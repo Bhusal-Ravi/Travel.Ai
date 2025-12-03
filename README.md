@@ -9,6 +9,9 @@ This travel assistant is an AI powered trip planning companion that transforms y
 
 # Gallery
 
+## Login Page (Email, Google, Github)
+<img width="1640" height="921" alt="image" src="https://github.com/user-attachments/assets/3eb3f6a8-966c-4179-b170-2f4463bf5785" />
+
 ## HomePage Trip
 <img width="1919" height="946" alt="Screenshot 2025-11-26 154104" src="https://github.com/user-attachments/assets/028a4b27-10b8-4fc4-bd0f-db21c0eeefb0" />
 
