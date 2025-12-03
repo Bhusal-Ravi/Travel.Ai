@@ -47,6 +47,20 @@ function SignIn() {
         });
     }
 
+
+    async function handleLoginGoogle() {
+        await authClient.signIn.social({
+            provider: "google",
+            callbackURL: 'http://localhost:5173'
+        })
+    }
+    async function handleLoginGithub() {
+        await authClient.signIn.social({
+            provider: "github",
+            callbackURL: 'http://localhost:5173'
+        })
+    }
+
     return (
         <div className="relative min-h-screen flex justify-center items-center bg-[#f4f1eb] px-4">
             <AnimatePresence>
@@ -100,9 +114,15 @@ function SignIn() {
                         type="submit"
                         className="w-full cursor-pointer bg-[#4a4742] text-white py-3 rounded-lg mt-4 hover:bg-[#3e3b36] transition-all"
                     >
-                        Sign Up
+                        Sign In
                     </button>
-
+                    <div className='flex flex-col justify-center items-center mt-4 '>
+                        or continue with
+                        <div className='flex justify-center gap-20 w-full items-center '>
+                            <button onClick={handleLoginGoogle} className="cursor-pointer flex justify-center items-center bg-[#f2f2f2] text-white  rounded-lg mt-4 hover:bg-[#F4F1EB] h-12 w-20 transition-all"><img className='h-10 w-10' src="/google.svg.webp" alt="google login" /></button>
+                            <button onClick={handleLoginGithub} className="cursor-pointer flex justify-center items-center bg-[#f2f2f2] text-white  rounded-lg mt-4 hover:bg-[#F4F1EB] h-12 w-20 transition-all"><img className='h-10 w-10' src="/github.png" alt="github login" /></button>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>
