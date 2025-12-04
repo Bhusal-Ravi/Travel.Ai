@@ -11,7 +11,7 @@ router.post('/userInput',async(req,res)=>{
             return res.status(400).json({error:"Question is required"})
         }
         
-        const response= await regularCall(question)
+        const response= await regularCall(question,threadId)
         
         
         if(!response ){
@@ -33,7 +33,7 @@ router.post('/userInputResume',async(req,res)=>{
             return res.status(400).json({error:"Question is required"})
         }
         
-        const response= await resumeCall(question)
+        const response= await resumeCall(question,threadId)
         
         
         if(!response || !response.trip){

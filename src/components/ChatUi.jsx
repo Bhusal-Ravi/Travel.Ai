@@ -35,6 +35,8 @@ function ChatUi() {
     const [update, setUpdate] = useState([])
     const [socketConnected, setSocketConnected] = useState(false)
     const [agent, setAgent] = useState()
+    const [interrupt, setInterrupt] = useState(false)
+    const [interruptMessage, setInterruptMessage] = useState()
     const agentRef = useRef(agent)
 
     const contentRef = useRef(content)
@@ -118,7 +120,58 @@ function ChatUi() {
             if (!result?.output?.message) {
                 setError(result?.error?.error?.message)
 
-            } else {
+            } else if (result?.output?.condition === 'interrupt') {
+                setInterrupt(true)
+                setInterruptMessage(result?.output?.message)
+            }
+            else {
+                setInterrupt(false)
+                setInterruptMessage()
+                setState(result)
+                setLocation(result.output.message.locations.location)
+                console.log(result)
+                setContent((prev) => [...prev, { type: 'ai', message: result.output.message }])
+
+                setLoading(false)
+            }
+
+        } catch (error) {
+            console.log(error)
+
+        }
+    }
+
+
+    async function handleInterrupt() {
+        try {
+            setLoading(true)
+            setInterrupt(false)
+            setInterruptMessage()
+            setError()
+            const response = await fetch(`http://localhost:4001/api/userInputResume`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    question: userMessage,
+                    threadId: chatId
+                })
+            })
+
+
+            const result = await response.json()
+            console.log(result)
+            if (!result?.output?.message) {
+                setError(result?.error?.error?.message)
+
+            } else if (result?.output?.condition === 'interrupt') {
+                setInterrupt(true)
+                setInterruptMessage(result?.output?.message)
+            }
+            else {
+                setInterrupt(false)
+                setInterruptMessage()
                 setState(result)
                 setLocation(result.output.message.locations.location)
                 console.log(result)
@@ -278,6 +331,26 @@ function ChatUi() {
     if (stateError) return (
         <div className='min-h-screen text-3xl font-bold text-red-600 flex justify-center items-center'>
             <p>{stateError}</p>
+        </div>
+    )
+
+    if (interrupt) return (
+        <div className='flex min-h-screen   justify-center items-center'>
+            <p className='text-white border border-black rounded-md py-5 px-5 font-bold text-lg'>{interruptMessage}</p>
+            {interrupt && (<div className='fixed px-2 py-10 bg-black/30 rounded-md h-[130px] max-w-7xl w-full  bottom-[7px] flex justify-center backdrop-blur-sm  items-center'>
+                <textarea id='chat'
+                    rows={4}
+                    autoFocus
+                    onChange={(e) => setUserMessage(e.target.value)}
+                    placeholder='You must provide [Source, Destination, No of trip days, Approximate budget, Starting Date etc] ...'
+                    value={userMessage}
+                    className=' px-2 text-white font-mono resize-none py-1 border-2 w-full rounded-md border-white' />
+                <motion.button
+                    whileTap={{ scale: 0.8 }}
+                    whileHover={{ scale: 1.2 }} className='ml-5  p-2 cursor-pointer ' onClick={handleInterrupt}> <CircleArrowUp className='text-white h-[50px] w-[30px]' /></motion.button>
+
+            </div>)}
+
         </div>
     )
 
@@ -641,7 +714,7 @@ function ChatUi() {
 
             </div>
             {/* Bottom textArea */}
-            {content.length === 0 && (<div className='fixed px-2 py-10 bg-black/30 rounded-md h-[130px] max-w-7xl w-full  bottom-[7px] flex justify-center backdrop-blur-sm  items-center'>
+            {(!content?.length) && (<div className='fixed px-2 py-10 bg-black/30 rounded-md h-[130px] max-w-7xl w-full  bottom-[7px] flex justify-center backdrop-blur-sm  items-center'>
                 <textarea id='chat'
                     rows={4}
                     autoFocus

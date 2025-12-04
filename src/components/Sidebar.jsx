@@ -72,7 +72,7 @@ function Sidebar({ sideBar }) {
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: -200, opacity: 0 }}
           className='bg-black/50   flex flex-col  items-center overflow-y-auto fixed z-20 left-0 w-[320px] top-[60px] bottom-0 border-r backdrop-blur-xs border-white '>
-          <div className='flex justify-center items-center mt-5'>
+          <div className='flex justify-center mb-[10px] bg-black/30 py-5 backdrop-blur-sm w-full sticky top-0 z-10 items-center mt-5'>
             <h1 className='font-bold text-lg border-b-2 border-white-80 text-white'>Chat History</h1>
             <button onClick={handleSidebarData} className='cursor-pointer'><RefreshCcw strokeWidth={1.2} className='ml-5 text-white' /></button>
 

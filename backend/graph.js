@@ -22,6 +22,7 @@ dotenv.config()
 const db = new Database('trip.sqlite');
 let chatId=null;
 
+
 export function setchatId(Id){
   chatId=Id
   console.log("hello")
@@ -149,7 +150,7 @@ const userInputLlm= llm.withStructuredOutput(inputState,{strict:false})
 
 
 
- const config={"configurable": {"thread_id": '2'}}
+ 
 const checkPointer = new SqliteSaver(db);
 
 
@@ -834,10 +835,11 @@ return {tripSummary:response.content}
  const workflow= graph.compile({checkpointer:checkPointer})
 
  
-export async function regularCall(question){
+export async function regularCall(question,threadId){
     
     const received={input:question}
 
+   const config={"configurable": {"thread_id": threadId}}
    
     const output=await  workflow.invoke(received,config)
     console.log(output)
@@ -856,8 +858,9 @@ export async function regularCall(question){
  }
 
 
- export async function resumeCall(question){
+ export async function resumeCall(question,threadId){
     const received=question;
+    const config={"configurable": {"thread_id": threadId}}
     console.log(received)
     const output= await workflow.invoke(new Command({resume:received}),config)
     if(output?.__interrupt__ && output.__interrupt__.length > 0){
