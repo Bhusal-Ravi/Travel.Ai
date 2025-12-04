@@ -36,14 +36,14 @@ router.post('/userInputResume',async(req,res)=>{
         const response= await resumeCall(question,threadId)
         
         
-        if(!response || !response.trip){
+        if(!response ){
             return res.status(404).json({error:"Failed to process request"})
         }
        return  res.status(200).json({output:response})
 
     }catch(error){
         console.log(error)
-        return res.status(500).json({error:"Failed to process request"})
+        return res.status(500).json(error)
     }
 })
 
