@@ -9,7 +9,7 @@ This travel assistant is an AI powered trip planning companion that transforms y
 
 # Gallery
 
-# Login Page (Email, Google, Github)
+# Login Page (Email, Google, Github) [Better Auth]
 <img width="1640" height="921" alt="image" src="https://github.com/user-attachments/assets/3eb3f6a8-966c-4179-b170-2f4463bf5785" />
 
 # Agentic WorkFlow
