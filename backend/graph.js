@@ -134,7 +134,7 @@ const state= Annotation.Root({
 
 })
 
-//Structured State for userInput formatting
+//Structured State for userInput format
 const inputState= z.object({
     startingLocation:z.string().describe('place where the user is currently planning the trip from'),
     destination:z.string().describe("place where the person is willing to go"),
