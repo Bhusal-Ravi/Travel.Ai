@@ -1,4 +1,4 @@
-# Travel.Ai WorkFlow Graph
+# TravelAi WorkFlow Graph
 
 This travel assistant is an AI powered trip planning companion that transforms your travel ideas into organized, ready to follow itineraries. Simply share your destination, dates, and budget, and it automatically designs detailed flight plans, daily activities, routes, and recommendations. It uses multiple smart agents working together to create personalized, efficient, and enjoyable travel plan tailored to your preferences.
 
